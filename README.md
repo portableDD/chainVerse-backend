@@ -1,1 +1,1 @@
-# chainVerse-academy
+# chainVerse academy
