@@ -1,6 +1,6 @@
 # Contributing to chainVerse
 
-Thank you for your interest in contributing to DeWordle! This guide will help you get started and while you are here do well to join our Telegram at [**chainverse**](https://t.me/+nfr3_9fyvDozYzI0).
+Thank you for your interest in contributing to chainVerse! This guide will help you get started and while you are here do well to join our Telegram at [**chainverse**](https://t.me/+nfr3_9fyvDozYzI0).
 
 ### Important Note Before Applying 📝
 
