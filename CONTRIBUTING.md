@@ -18,23 +18,18 @@ Instead, provide a **clear explanation of your approach**, which includes:
 
 ## What is chainVerse?
 
-chainverse Learning Platform is a decentralized online education platform focused on educating users about the World chain ecosystem. It is exclusively designed for Web3 education, integrating crypto-based payments, NFT-based certification, and decentralized governance.
+ChainVerse Academy is a decentralized Web3 education platform built on the Stellar blockchain. It offers crypto-based payments, NFT certifications, and DAO governance, allowing students to learn about multiple blockchain ecosystems, earn rewards, and own their learning assets through secure, low-cost transactions.
 
 
 ## chainVerse Academy - Key Points
 
-- Decentralized Web3 learning platform built on blockchain technology
-- Crypto-based payments for courses and sessions
-- NFT certification for course completion that's verifiable on-chain
-- Web3 wallet integration (MetaMask, WalletConnect) for transactions
-- Course ownership with ability to transfer or resell courses
-- Live learning sessions between students and instructors
-- Reward system for top-performing students
-- Instructor earning model based on student enrollments
-- DAO governance allowing community voting on platform improvements
-- On-chain reputation system for students and instructors
-- Built on World Blockchain with Ethereum Layer-2 integration
-- Phased development approach starting with MVP core features
+- Enable crypto-based course purchases and seamless Web3 wallet integration (e.g., Metamask, WalletConnect)
+- Provide an instructor dashboard for uploading courses, setting crypto prices, and tracking student engagements
+- Facilitate live learning sessions and 1-on-1 mentorship with smart contract-backed payments
+- Conduct exams and assignments on-chain, offering crypto rewards for top-performing students
+- Issue verifiable NFT certificates upon course completion, stored securely on the blockchain
+- Allow users to transfer or resell courses through a smart contract-driven ownership model
+- Implement a decentralized reputation system and DAO governance for community-led platform improvements
 
 How to Contribute🤝
 
