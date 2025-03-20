@@ -1,0 +1,27 @@
+{
+  "name": "chainverse-backend",
+  "version": "1.0.0",
+  "description": "ChainVerse Academy is a decentralized Web3 education platform built on the Stellar blockchain",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gen-x-academy/chainVerse-backend.git"
+  },
+  "author": "chainVerse Academy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Gen-x-academy/chainVerse-backend/issues"
+  },
+  "homepage": "https://github.com/Gen-x-academy/chainVerse-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.9"
+  }
+}
