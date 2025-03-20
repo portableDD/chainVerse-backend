@@ -2,13 +2,19 @@ const express = require('express');
 const dotEnv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
+const app = express();
+const dbConnection = require('./src/config/database/connection');
+
+dotEnv.config();
 
 
+app.use(cors());
+dbConnection();
 
 
 dotEnv.config();
 
-const app = express();
+
 
 app.use(cors());
 
