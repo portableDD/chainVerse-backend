@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
-const adminMiddleware = require('../middleware/admin');
+const auth = require('../middlewares/auth');
+const adminMiddleware = require('../middlewares/admin');
 const { validatePlatformInfo } = require('../validators/platformInfoValidator');
 const platformInfoController = require('../controllers/platformInfoController');
 
