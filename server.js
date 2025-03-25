@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const app = express();
 const dbConnection = require("./src/config/database/connection");
+const router = require("./src/routes/index");
 
 dotEnv.config();
 
@@ -21,6 +22,8 @@ app.use(morgan("dev"));
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");
 });
+
+app.use("/api", router);
 
 const PORT = process.env.PORT || 3000;
 
@@ -41,6 +44,3 @@ app.use((error, req, res, next) => {
     body: {},
   });
 });
-
-const tutorRoutes = require("./routes/tutorRoutes");
-app.use("/api", tutorRoutes);
