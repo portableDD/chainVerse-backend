@@ -4,13 +4,12 @@ const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const app = express();
-const dbConnection = require('./src/config/database/connection');
 const connectDB = require('./src/config/database/connection');
+const studentRoute = require('./src/routes/studentRoute')
 
 dotEnv.config();
 
 app.use(cors());
-dbConnection();
 
 connectDB();
 // dotEnv.config();
@@ -25,6 +24,7 @@ app.use(morgan('dev'));
 // Define Routes
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
+app.use('/student', studentRoute)
 
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");

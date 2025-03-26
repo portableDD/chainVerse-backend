@@ -1,4 +1,4 @@
-const Tutor = require("../models/Tutor");
+const Tutor = require("./../models/tutors");
 
 // Get all tutors with pagination
 exports.getAllTutors = async (req, res) => {
