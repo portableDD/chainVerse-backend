@@ -63,3 +63,32 @@ exports.signInSchema = Joi.object({
          "any.required": "Password is required.",
       }),
 });
+
+exports.emailverifySchema = Joi.object({
+   email: Joi.string()
+      .min(6)
+      .max(60)
+      .required()
+      .email({
+         tlds: { allow: ["com", "net"] },
+      })
+      .messages({
+         "string.base": "Email must be a string.",
+         "string.empty": "Email cannot be empty.",
+         "string.min": "Email must be at least 6 characters long.",
+         "string.max": "Email cannot exceed 60 characters.",
+         "string.email": "Email must be a valid email address.",
+         "any.required": "Email is required.",
+      }),
+   code: Joi.string()
+      .length(6)
+      .required()
+      .pattern(/^\d{6}$/)
+      .messages({
+         "string.base": "Verification code must be a string.",
+         "string.empty": "Verification code cannot be empty.",
+         "string.length": "Verification code must be exactly 6 digits.",
+         "string.pattern.base": "Verification code must contain only digits.",
+         "any.required": "Verification code is required.",
+      }),
+});
