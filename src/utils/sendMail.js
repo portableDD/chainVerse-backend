@@ -8,13 +8,13 @@ const transport = nodemailer.createTransport({
    },
 });
 
-exports.sendEmail = async (email, verificationCode) => {
+exports.sendEmail = async (email, verificationCode, subject) => {
    try {
       const info = await transport.sendMail({
          from: process.env.EMAIL_USER,
          to: email,
-         subject: "Account Verification",
-         html: `<h1>Your Verification Code: ${verificationCode}</h1>`,
+         subject: subject,
+         html: `<h1>Your ${subject} Code: ${verificationCode}</h1>`,
       });
 
       // If email is successfully sent
