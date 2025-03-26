@@ -51,18 +51,9 @@ exports.signIn = async (req, res) => {
       // check if student exist
       const existingStudent = await Student.findOne({ email }).select("+password");
       if (!existingStudent) {
-          return res.status(404).json({
-              status: 'fail',
-              message: 'student not found'
-         })
-         
-      }
-
-      // check if student is verified
-      if (existingStudent.verified === false) {
-         return res.status(403).json({
+         return res.status(404).json({
             status: "fail",
-            message: "you are not yet verified",
+            message: "student not found",
          });
       }
 
@@ -75,6 +66,14 @@ exports.signIn = async (req, res) => {
          });
       }
 
+      // check if student is verified
+      if (existingStudent.verified === false) {
+         return res.status(403).json({
+            status: "fail",
+            message: "you are not yet verified",
+         });
+      }
+
       // generate token
       const token = jwt.sign(
          {
@@ -82,25 +81,25 @@ exports.signIn = async (req, res) => {
             email: existingStudent.email,
             verified: existingStudent.verified,
          },
-          process.env.JWT_SECRET,
-         {expiresIn: '8h'}
+         process.env.JWT_SECRET,
+         { expiresIn: "8h" }
       );
-    //   update loggedIn status
-       existingStudent.loggedIn = true;
-       await existingStudent.save();
+      //   update loggedIn status
+      existingStudent.loggedIn = true;
+      await existingStudent.save();
 
       // set cookie with token
-       res.cookie("Authorization", "Bearer " + token, {
-           expires: new Date(Date.now() + 8 * 3600000),
-           httpOnly: process.env.NODE_ENV === "production",
-           secure: process.env.NODE_ENV === "production",
-       });
+      res.cookie("Authorization", "Bearer " + token, {
+         expires: new Date(Date.now() + 8 * 3600000),
+         httpOnly: process.env.NODE_ENV === "production",
+         secure: process.env.NODE_ENV === "production",
+      });
 
-       return res.status(200).json({
-           status: 'success',
-           message: 'student logged in successfully',
-           token
-       })
+      return res.status(200).json({
+         status: "success",
+         message: "student logged in successfully",
+         token,
+      });
    } catch (error) {
       return res.status(401).json({
          status: "fail",
@@ -108,3 +107,11 @@ exports.signIn = async (req, res) => {
       });
    }
 };
+
+exports.signOut = async (req, res) => {
+   res.clearCookie('Authorization');
+   return res.status(200).json({
+      status: 'success',
+      message: 'student logged out'
+   })
+}
