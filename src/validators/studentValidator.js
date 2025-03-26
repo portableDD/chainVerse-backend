@@ -37,3 +37,29 @@ exports.signUpSchema = Joi.object({
          "any.required": "Password is required.",
       }),
 });
+
+exports.signInSchema = Joi.object({
+   email: Joi.string()
+      .min(6)
+      .max(60)
+      .required()
+      .email({
+         tlds: { allow: ["com", "net"] },
+      })
+      .messages({
+         "string.base": "Email must be a string.",
+         "string.empty": "Email cannot be empty.",
+         "string.min": "Email must be at least 6 characters long.",
+         "string.max": "Email cannot exceed 60 characters.",
+         "string.email": "Email must be a valid email address.",
+         "any.required": "Email is required.",
+      }),
+   password: Joi.string()
+      .required()
+      .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"))
+      .messages({
+         "string.pattern.base":
+            "Password must be at least 8 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+         "any.required": "Password is required.",
+      }),
+});
