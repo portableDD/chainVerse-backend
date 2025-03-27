@@ -74,13 +74,21 @@ exports.signIn = async (req, res) => {
    const { email, password } = req.body;
    try {
       await signInSchema.validateAsync({ email, password });
-      // check if student exist and password is correct
+      // Check if student exists
       const existingStudent = await Student.findOne({ email }).select("+password");
-      const correctPassword = await doCompare(password, existingStudent.password);
-      if (!existingStudent || correctPassword) {
+      if (!existingStudent) {
          return res.status(401).json({
             status: "fail",
-            message: "invalid email or password",
+            message: "Invalid email or password",
+         });
+      }
+
+      // Check if password is correct
+      const correctPassword = await doCompare(password, existingStudent.password);
+      if (!correctPassword) {
+         return res.status(401).json({
+            status: "fail",
+            message: "Invalid email or password",
          });
       }
       // check if student is verified
@@ -122,7 +130,7 @@ exports.signIn = async (req, res) => {
       });
    } catch (error) {
       const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details ? error.details[0].message : "Login failed";
+      const message = error.details ? error.details[0].message : error.message;
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
@@ -156,7 +164,7 @@ exports.deleteAccount = async (req, res) => {
       });
    } catch (error) {
       const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details ? error.details[0].message : "Login failed";
+      const message = error.details ? error.details[0].message : error.message;
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
@@ -215,7 +223,7 @@ exports.verifyEmail = async (req, res) => {
       });
    } catch (error) {
       const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details ? error.details[0].message : "Login failed";
+      const message = error.details ? error.details[0].message : error.message;
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
@@ -269,7 +277,7 @@ exports.forgotPassword = async (req, res) => {
       });
    } catch (error) {
       const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details ? error.details[0].message : "Login failed";
+      const message = error.details ? error.details[0].message : error.message;
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
@@ -333,13 +341,13 @@ exports.resetPassword = async (req, res) => {
       });
    } catch (error) {
       const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details ? error.details[0].message : "Login failed";
+      const message = error.details ? error.details[0].message : error.message;
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
 exports.refreshToken = async (req, res) => {
-   const refreshToken = req.cookie || req.body;
+   const { refreshToken } = req.body;
    if (!refreshToken) {
       return res.status(401).json({
          status: "fail",
@@ -349,7 +357,7 @@ exports.refreshToken = async (req, res) => {
    try {
       // verify refresToken (JWT and DB)
       const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-      const student = await Student.finbyId(decoded.sub).select("+refreshToken");
+      const student = await Student.findById(decoded.sub).select("+refreshToken");
       // check if token matches DB (and is not expired)
       if (!student || !student.refreshToken) {
          return res.status(401).json({
@@ -357,8 +365,9 @@ exports.refreshToken = async (req, res) => {
             message: "invalid or expired refresh token",
          });
       }
+
       // verify hashed refreshToken matches DB
-      const isTokenValid = await doCompare(refreshToken, student.refreshToken);
+      const isTokenValid = await doHash(refreshToken, SALT_VALUE) === student.refreshToken;
       if (!isTokenValid) {
          return res.status(401).json({
             status: "fail",
@@ -376,10 +385,9 @@ exports.refreshToken = async (req, res) => {
          {expiresIn: REFRESH_TOKEN_EXPIRY}
       )
       // hash and save new refresh token
-      const hashedNewRefreshToken = doHash(newRefreshToken, SALT_VALUE);
+      const hashedNewRefreshToken = await doHash(newRefreshToken, SALT_VALUE);
       student.refreshToken = hashedNewRefreshToken;
       await student.save();
-
       // set cookie for both accessToken and refreshtoken
       res.cookie(
          'accessToken',
@@ -407,9 +415,9 @@ exports.refreshToken = async (req, res) => {
          message: 'token refreshed successfully'
       })
    } catch (error) {
-      return res.status(401).json({
+      return res.status(500).json({
          status: "fail",
-         message: "Invalid refresh token",
+         message: `Invalid refresh token\n error:${error}`,
       });
    }
 };
