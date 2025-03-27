@@ -1,5 +1,5 @@
 const express = require("express");
-const { signUp, signIn, deleteAccount, verifyEmail, forgotPassword, resetPassword } = require("./../controllers/studentController");
+const { signUp, signIn, deleteAccount, verifyEmail, forgotPassword, resetPassword } = require("./../controllers/authController");
 
 const studentRoute = new express.Router();
 

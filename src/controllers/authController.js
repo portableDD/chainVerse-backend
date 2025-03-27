@@ -1,14 +1,19 @@
-const Student = require("./../models/student");
+const Student = require("../models/student");
 const {
    signUpSchema,
    signInSchema,
    emailverifySchema,
    forgotPasswordSchema,
    resetPasswordSchema,
-} = require("./../validators/studentValidator");
-const { doHash, doCompare, doHmac, compareHmac } = require("./../utils/hashing");
+} = require("../validators/authValidator");
+const { doHash, doCompare, doHmac, compareHmac } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/sendMail");
+
+const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000;
+const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000;
+const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000;
+const SALT_VALUE = 12;
 
 exports.signUp = async (req, res) => {
    const { firstName, lastName, email, password } = req.body;
@@ -25,7 +30,7 @@ exports.signUp = async (req, res) => {
       }
 
       // hash password
-      const hashedPassword = await doHash(password, 12);
+      const hashedPassword = await doHash(password, SALT_VALUE);
       // save student to the database
       const newStudent = await Student({
          firstName,
@@ -52,43 +57,32 @@ exports.signUp = async (req, res) => {
       newStudent.verificationCode = hashedVerificationCode;
       newStudent.verificationCodeValidation = Date.now();
       await newStudent.save();
+      console.log(`newStudent:${newStudent}`);
 
       return res.status(201).json({
          status: "success",
          message: "student registered successfully, please verify your email",
       });
    } catch (error) {
-      return res.status(400).json({
-         status: "fail",
-         error: error.details ? error.details[0].message : error.message,
-      });
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
 exports.signIn = async (req, res) => {
    const { email, password } = req.body;
-
    try {
       await signInSchema.validateAsync({ email, password });
-
-      // check if student exist
+      // check if student exist and password is correct
       const existingStudent = await Student.findOne({ email }).select("+password");
-      if (!existingStudent) {
-         return res.status(404).json({
-            status: "fail",
-            message: "student not found",
-         });
-      }
-
-      // compare password
       const correctPassword = await doCompare(password, existingStudent.password);
-      if (!correctPassword) {
+      if (!existingStudent || correctPassword) {
          return res.status(401).json({
             status: "fail",
-            message: "incorrect password",
+            message: "invalid email or password",
          });
       }
-
       // check if student is verified
       if (!existingStudent.verified) {
          return res.status(403).json({
@@ -96,43 +90,47 @@ exports.signIn = async (req, res) => {
             message: "account not verified",
          });
       }
-
-      // generate token
-      const token = jwt.sign(
-         {
-            studentId: existingStudent._id,
-            email: existingStudent.email,
-            verified: existingStudent.verified,
-         },
-         process.env.JWT_SECRET,
-         { expiresIn: "8h" }
-      );
-      //   update loggedIn status
-      existingStudent.loggedIn = true;
+      // generate access token and refresh token
+      const accessToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_ACCESS_TOKEN, {
+         expiresIn: "15m",
+      });
+      const refreshToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_REFRESH_TOKEN, {
+         expiresIn: "7d",
+      });
+      // hash and save refresh token in DB
+      const hashedRefreshToken = await doHash(refreshToken, SALT_VALUE);
+      existingStudent.refreshToken = hashedRefreshToken;
       await existingStudent.save();
-
       // set cookie with token
-      res.cookie("Authorization", "Bearer " + token, {
-         expires: new Date(Date.now() + 8 * 3600000),
-         httpOnly: process.env.NODE_ENV === "production",
+      res.cookie("accessToken", accessToken, {
+         maxAge: ACCESS_TOKEN_EXPIRY,
+         sameSite: "lax", //  CSRF protection
+         httpOnly: true,
          secure: process.env.NODE_ENV === "production",
+      });
+      res.cookie("refreshToken", refreshToken, {
+         maxAge: REFRESH_TOKEN_EXPIRY,
+         sameSite: "strict", //  CSRF protection
+         httpOnly: true,
+         secure: process.env.NODE_ENV === "production",
+         path: "/refresh-token",
       });
 
       return res.status(200).json({
          status: "success",
-         message: "student logged in successfully",
-         token,
+         message: "Logged in",
       });
    } catch (error) {
-      return res.status(401).json({
-         status: "fail",
-         error: error.details ? error.details[0].message : error.message,
-      });
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
 exports.signOut = async (req, res) => {
-   res.clearCookie("Authorization");
+   res.clearCookie("accessToken");
+   res.clearCookie("refreshToken");
+
    return res.status(200).json({
       status: "success",
       message: "student logged out",
@@ -157,10 +155,9 @@ exports.deleteAccount = async (req, res) => {
          message: "Student account deleted successfully",
       });
    } catch (error) {
-      return res.status(500).json({
-         status: "error",
-         message: error.message,
-      });
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
@@ -172,7 +169,7 @@ exports.verifyEmail = async (req, res) => {
 
       // fetch student to see if student exist
       const student = await Student.findOne({ email }).select(
-         "+verificationCode verificationCodeValidation"
+         "+verificationCode +verificationCodeValidation"
       );
       console.log(`student: ${student}`);
       if (!student) {
@@ -198,10 +195,8 @@ exports.verifyEmail = async (req, res) => {
             message: "Invalid verification code",
          });
       }
-
-      // check if reset password code is expired (valid for 15mins)
-      const expireTime = 15 * 60 * 1000; //15mins in milliseconds
-      if (Date.now() - student.verificationCodeValidation > expireTime) {
+      // check if reset password code is expired (valid for 5mins)
+      if (Date.now() - student.verificationCodeValidation > VERIFICATION_CODE_EXPIRY) {
          return res.status(400).json({
             status: "fail",
             message: "password reset code has expired",
@@ -219,10 +214,9 @@ exports.verifyEmail = async (req, res) => {
          message: "Email verified successfully",
       });
    } catch (error) {
-      return res.status(400).json({
-         status: "error",
-         message: error.details ? error.details[0].message : error.message,
-      });
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
@@ -232,7 +226,9 @@ exports.forgotPassword = async (req, res) => {
       await forgotPasswordSchema.validateAsync({ email });
 
       // check if student exist
-      const student = await Student.findOne({ email }).select("+forgotPasswordCode +forgotPasswordCodeValidation");
+      const student = await Student.findOne({ email }).select(
+         "+forgotPasswordCode +forgotPasswordCodeValidation"
+      );
       if (!student) {
          return res.status(404).json({
             status: "fail",
@@ -262,20 +258,19 @@ exports.forgotPassword = async (req, res) => {
       const hashedPasswordCode = doHmac(resetPasswordCode, process.env.CRYPTO_KEY);
 
       // store and save the hashed password reset code
-      student.forgotPassword = hashedPasswordCode;
-      student.forgotPasswordValidation = Date.now();
+      student.forgotPasswordCode = hashedPasswordCode;
+      student.forgotPasswordCodeValidation = Date.now();
       await student.save();
-      console.log(student)
+      console.log(student);
 
       return res.status(200).json({
          status: "success",
          message: "email sent successfully with password reset code",
       });
    } catch (error) {
-      return res.status(400).json({
-         status: "error",
-         error: error.details ? error.details[0].message : error.message,
-      });
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
    }
 };
 
@@ -316,8 +311,8 @@ exports.resetPassword = async (req, res) => {
          });
       }
 
-      // check if reset password code is expired (valid for 15mins)
-      const expireTime = 15 * 60 * 1000; //15mins in milliseconds
+      // check if reset password code is expired (valid for 5mins)
+      const expireTime = 5 * 60 * 1000; //5mins in milliseconds
       if (Date.now() - student.forgotPasswordCodeValidation > expireTime) {
          return res.status(400).json({
             status: "fail",
@@ -337,9 +332,84 @@ exports.resetPassword = async (req, res) => {
          message: "password updated successfully",
       });
    } catch (error) {
-      return res.status(400).json({
-         status: "error",
-         error: error.details ? error.details[0].message : error.message,
+      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
+      const message = error.details ? error.details[0].message : "Login failed";
+      return res.status(statusCode).json({ status: "fail", message });
+   }
+};
+
+exports.refreshToken = async (req, res) => {
+   const refreshToken = req.cookie || req.body;
+   if (!refreshToken) {
+      return res.status(401).json({
+         status: "fail",
+         message: "refresh token not provided",
+      });
+   }
+   try {
+      // verify refresToken (JWT and DB)
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+      const student = await Student.finbyId(decoded.sub).select("+refreshToken");
+      // check if token matches DB (and is not expired)
+      if (!student || !student.refreshToken) {
+         return res.status(401).json({
+            status: "fail",
+            message: "invalid or expired refresh token",
+         });
+      }
+      // verify hashed refreshToken matches DB
+      const isTokenValid = await doCompare(refreshToken, student.refreshToken);
+      if (!isTokenValid) {
+         return res.status(401).json({
+            status: "fail",
+            message: "Token tampered with",
+         });
+      }
+      // generate new access token 
+      const newAccessToken = jwt.sign({ sub: student._id }, process.env.JWT_ACCESS_TOKEN, {
+         expiresIn: ACCESS_TOKEN_EXPIRY,
+      });
+      // rotate refreshToken
+      const newRefreshToken = jwt.sign(
+         { sub: student._id },
+         process.env.JWT_REFRESH_TOKEN,
+         {expiresIn: REFRESH_TOKEN_EXPIRY}
+      )
+      // hash and save new refresh token
+      const hashedNewRefreshToken = doHash(newRefreshToken, SALT_VALUE);
+      student.refreshToken = hashedNewRefreshToken;
+      await student.save();
+
+      // set cookie for both accessToken and refreshtoken
+      res.cookie(
+         'accessToken',
+         newAccessToken,
+         {
+            maxAge: ACCESS_TOKEN_EXPIRY,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+         }
+      );
+      res.cookie(
+         'refreshToken',
+         newRefreshToken,
+         {
+            maxAge: REFRESH_TOKEN_EXPIRY,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+         }
+      );
+
+      res.status(200).json({
+         status: 'success',
+         message: 'token refreshed successfully'
+      })
+   } catch (error) {
+      return res.status(401).json({
+         status: "fail",
+         message: "Invalid refresh token",
       });
    }
 };

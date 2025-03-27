@@ -5,7 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const app = express();
 const connectDB = require('./src/config/database/connection');
-const studentRoute = require('./src/routes/studentRoute')
+const studentRoute = require('./src/routes/authRoute')
 
 dotEnv.config();
 

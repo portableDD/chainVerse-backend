@@ -44,9 +44,9 @@ const studentSchema = mongoose.Schema(
          type: Number,
          select: false,
       },
-      loggedIn: {
-         type: Boolean,
-         default: false,
+      refreshToken: {
+         type: String,
+         select: false,
       },
    },
    { timestamps: true }
