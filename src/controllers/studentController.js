@@ -52,7 +52,6 @@ exports.signUp = async (req, res) => {
       newStudent.verificationCode = hashedVerificationCode;
       newStudent.verificationCodeValidation = Date.now();
       await newStudent.save();
-      newStudent.password = undefined;
 
       return res.status(201).json({
          status: "success",
@@ -172,7 +171,9 @@ exports.verifyEmail = async (req, res) => {
       await emailverifySchema.validateAsync({ email, code });
 
       // fetch student to see if student exist
-      const student = await Student.findOne({ email }).select("+verificationCode");
+      const student = await Student.findOne({ email }).select(
+         "+verificationCode verificationCodeValidation"
+      );
       console.log(`student: ${student}`);
       if (!student) {
          return res.status(404).json({
@@ -195,6 +196,15 @@ exports.verifyEmail = async (req, res) => {
          return res.status(400).json({
             status: "fail",
             message: "Invalid verification code",
+         });
+      }
+
+      // check if reset password code is expired (valid for 15mins)
+      const expireTime = 15 * 60 * 1000; //15mins in milliseconds
+      if (Date.now() - student.verificationCodeValidation > expireTime) {
+         return res.status(400).json({
+            status: "fail",
+            message: "password reset code has expired",
          });
       }
 
@@ -222,7 +232,7 @@ exports.forgotPassword = async (req, res) => {
       await forgotPasswordSchema.validateAsync({ email });
 
       // check if student exist
-      const student = await Student.findOne({ email });
+      const student = await Student.findOne({ email }).select("+forgotPasswordCode +forgotPasswordCodeValidation");
       if (!student) {
          return res.status(404).json({
             status: "fail",
@@ -239,7 +249,7 @@ exports.forgotPassword = async (req, res) => {
       }
 
       // generate password reset code and send email
-      resetPasswordCode = Math.floor(Math.random() * 1e6).toString();
+      const resetPasswordCode = Math.floor(Math.random() * 1e6).toString();
       const info = await sendEmail(email, resetPasswordCode, "Password Reset");
       if (!info) {
          return res.status(500).json({
@@ -255,6 +265,7 @@ exports.forgotPassword = async (req, res) => {
       student.forgotPassword = hashedPasswordCode;
       student.forgotPasswordValidation = Date.now();
       await student.save();
+      console.log(student)
 
       return res.status(200).json({
          status: "success",
@@ -269,54 +280,66 @@ exports.forgotPassword = async (req, res) => {
 };
 
 exports.resetPassword = async (req, res) => {
-   const { email, newPassword, code } = req.body
-   
+   const { email, password, code } = req.body;
+
    try {
       // input validation
-      await resetPasswordSchema.validateAsync({ email, newPassword, code });
+      await resetPasswordSchema.validateAsync({ email, password, code });
 
       // check if student exist
-      const student = await Student.findOne({ email }).select("+forgotPasswordCode password");
+      const student = await Student.findOne({ email }).select(
+         "+forgotPasswordCode +password +forgotPasswordCodeValidation"
+      );
+      console.log(`student:${student}`);
       if (!student) {
          return res.status(404).json({
-            status: 'fail',
-            message: 'student not found'
-         })
+            status: "fail",
+            message: "student not found",
+         });
       }
 
       // check if student account is verified
       if (!student.verified) {
+         console.log(`email:${student.email}, verified:${student.verified}`);
          return res.status(409).json({
-            status: 'fail',
-            message: 'account not yet verified'
-         })
+            status: "fail",
+            message: "account not yet verified",
+         });
       }
 
       // check if reset password code is valid
       const isValidCode = compareHmac(code, process.env.CRYPTO_KEY, student.forgotPasswordCode);
       if (!isValidCode) {
          return res.status(409).json({
-            status: 'fail',
-            message: 'password reset code is invalid'
-         })
+            status: "fail",
+            message: "password reset code is invalid",
+         });
+      }
+
+      // check if reset password code is expired (valid for 15mins)
+      const expireTime = 15 * 60 * 1000; //15mins in milliseconds
+      if (Date.now() - student.forgotPasswordCodeValidation > expireTime) {
+         return res.status(400).json({
+            status: "fail",
+            message: "password reset code has expired",
+         });
       }
 
       // hash the new password and update and save student
-      const hashedPassword = await doHash(newPassword, 12);
+      const hashedPassword = await doHash(password, 12);
       student.password = hashedPassword;
       student.forgotPasswordCode = undefined;
       student.forgotPasswordCodeValidation = undefined;
-      await student.save()
+      await student.save();
 
       return res.status(200).json({
-         status: 'success',
-         message: 'password updated successfully'
-      })
-
+         status: "success",
+         message: "password updated successfully",
+      });
    } catch (error) {
       return res.status(400).json({
-         status: 'error',
-         error: error.details ? error.details[0].message : error.message
-      })
+         status: "error",
+         error: error.details ? error.details[0].message : error.message,
+      });
    }
-}
+};
