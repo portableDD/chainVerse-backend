@@ -1,37 +1,50 @@
 const express = require("express");
+const dotEnv = require('dotenv');
+const morgan = require('morgan');
+const cors = require('cors');
+const helmet = require('helmet');
+
 const dotEnv = require("dotenv");
-const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
+
 const app = express();
-const connectDB = require("./src/config/database/connection");
-const authRoute = require("./src/routes/authRoute");
+const dbConnection = require("./src/config/database/connection");
+const router = require("./src/routes/index");
+const studyGroupRoutes = require("./src/routes/studyGroupRoutes")
+
 
 dotEnv.config();
 
-connectDB();
+app.use(cors());
+dbConnection();
+
 // dotEnv.config();
 
-// app.use(cors());
 app.use(cors());
+
 app.use(express.json());
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 
 // Define Routes
+
+app.use('/admin', require('./src/routes/admin'));
+app.use('/platform-info', require('./src/routes/platformInfo'));
+app.use("/api/study-groups", studyGroupRoutes)
+
 app.use("/admin", require("./src/routes/admin"));
 app.use("/platform-info", require("./src/routes/platformInfo"));
-app.use("/student", authRoute);
+app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
+
 
 app.get("/", (req, res) => {
    res.send("Welcome to ChainVerse Academy");
 });
 
-const tutorRoutes = require("./routes/tutorRoutes");
-app.use("/api", tutorRoutes);
+app.use("/api", router);
 
 app.use((req, res, next) => {
    const error = new Error("Not found");
@@ -52,3 +65,11 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
    console.log(`Server listening on port ${PORT}`);
 });
+
+// Add this to your existing server.js file
+
+
+
+
+
+
