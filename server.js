@@ -41,29 +41,29 @@ app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
 
 
 app.get("/", (req, res) => {
-  res.send("Welcome to ChainVerse Academy");
+   res.send("Welcome to ChainVerse Academy");
 });
 
 app.use("/api", router);
 
 app.use((req, res, next) => {
-  const error = new Error("Not found");
-  error.status = 404;
-  next(error);
+   const error = new Error("Not found");
+   error.status = 404;
+   next(error);
 });
 
 app.use((error, req, res, next) => {
-  res.status(error.status || 500).send({
-    status: error.status || 500,
-    message: error.message,
-    body: {},
-  });
+   res.status(error.status || 500).send({
+      status: error.status || 500,
+      message: error.message,
+      body: {},
+   });
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+   console.log(`Server listening on port ${PORT}`);
 });
 
 // Add this to your existing server.js file
