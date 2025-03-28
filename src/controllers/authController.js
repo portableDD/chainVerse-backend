@@ -1,4 +1,4 @@
-const Student = require("../models/student");
+const { Student, RevokedToken } = require("../models/student");
 const {
    signUpSchema,
    signInSchema,
@@ -10,9 +10,9 @@ const { doHash, doCompare, doHmac, compareHmac } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/sendMail");
 
-const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000;
-const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000;
-const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000;
+const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; //5m
+const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000; //15m
+const REFRESH_TOKEN_EXPIRY = 1 * 24 * 60 * 60 * 1000; //1d
 const SALT_VALUE = 12;
 
 exports.signUp = async (req, res) => {
@@ -103,7 +103,7 @@ exports.signIn = async (req, res) => {
          expiresIn: "15m",
       });
       const refreshToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_REFRESH_TOKEN, {
-         expiresIn: "7d",
+         expiresIn: "24h",
       });
       // hash and save refresh token in DB
       const hashedRefreshToken = await doHash(refreshToken, SALT_VALUE);
@@ -355,48 +355,64 @@ exports.refreshToken = async (req, res) => {
       });
    }
    try {
-      // verify refresToken (JWT and DB)
+      // verify jwt
       const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-      const student = await Student.findById(decoded.sub).select("+refreshToken");
-      // check if token matches DB (and is not expired)
+      const student = await Student.findById(decoded.sub).select('+refreshToken');
       if (!student || !student.refreshToken) {
          return res.status(401).json({
-            status: "fail",
-            message: "invalid or expired refresh token",
-         });
+            status: 'fail',
+            message: 'invalid or expired refresh token'
+         })
       }
-
-      // verify hashed refreshToken matches DB
-      const isTokenValid = await doHash(refreshToken, SALT_VALUE) === student.refreshToken;
-      if (!isTokenValid) {
+      // check if token is revoked
+      const hashedRefreshToken = doHash(refreshToken, SALT_VALUE);
+      const isRevoked = await RevokedToken.findOne({
+         token: hashedRefreshToken,
+         studentId: student._id
+      })
+      if (isRevoked) {
          return res.status(401).json({
-            status: "fail",
-            message: "Token tampered with",
-         });
+            status: 'fail',
+            message: 'refresh token revoked'
+         })
       }
-      // generate new access token 
-      const newAccessToken = jwt.sign({ sub: student._id }, process.env.JWT_ACCESS_TOKEN, {
-         expiresIn: ACCESS_TOKEN_EXPIRY,
-      });
-      // rotate refreshToken
+      // verify active token matches
+      if (hashedRefreshToken !== student.refreshToken) {
+         return res.status(401).json({
+            status: 'fail',
+            message: 'invalid or tampered refresh token'
+         })
+      }
+      // generate new access and refresh token
+      const newAccessToken = jwt.sign(
+         { sub: student._d },
+         process.env, JWT_ACCESS_TOKEN,
+         {expiresIn: '24h'}
+      );
       const newRefreshToken = jwt.sign(
          { sub: student._id },
          process.env.JWT_REFRESH_TOKEN,
-         {expiresIn: REFRESH_TOKEN_EXPIRY}
-      )
-      // hash and save new refresh token
-      const hashedNewRefreshToken = await doHash(newRefreshToken, SALT_VALUE);
+         { expiresIn: '24h' }
+      );
+      // Blacklist old refresh token
+      await RevokedToken.create({
+         token: hashedRefreshToken,
+         studentId: student._id,
+         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY)
+      })
+      // update active token
+      const hashedNewRefreshToken = await doHash(newRefreshToken, SALT_VALUE)
       student.refreshToken = hashedNewRefreshToken;
-      await student.save();
-      // set cookie for both accessToken and refreshtoken
+      await student.save;
+      // set cookies
       res.cookie(
          'accessToken',
          newAccessToken,
          {
             maxAge: ACCESS_TOKEN_EXPIRY,
             httpOnly: true,
+            sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
          }
       );
       res.cookie(
@@ -405,19 +421,19 @@ exports.refreshToken = async (req, res) => {
          {
             maxAge: REFRESH_TOKEN_EXPIRY,
             httpOnly: true,
+            sameSite: 'strict',
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
+            path: '/refresh-token'
          }
       );
-
-      res.status(200).json({
+      return res.status(200).json({
          status: 'success',
          message: 'token refreshed successfully'
       })
    } catch (error) {
       return res.status(500).json({
          status: "fail",
-         message: `Invalid refresh token\n error:${error}`,
+         message: `Invalid refresh token`,
       });
    }
 };

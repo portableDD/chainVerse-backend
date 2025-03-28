@@ -52,5 +52,13 @@ const studentSchema = mongoose.Schema(
    { timestamps: true }
 );
 
-const Student = mongoose.model("Student", studentSchema);
-module.exports = Student;
+// revokedToken schema in order to implement refresh token rotation
+const revokedTokenSchema = new mongoose.Schema({
+   token: { type: String, required: true }, // Hashed refresh token
+   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
+   expiresAt: { type: Date, required: true }, // For cleanup
+});
+
+exports.RevokedToken = mongoose.model("RevokedToken", revokedTokenSchema);
+exports.Student = mongoose.model("Student", studentSchema);
+
