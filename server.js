@@ -1,11 +1,19 @@
 const express = require("express");
+const dotEnv = require('dotenv');
+const morgan = require('morgan');
+const cors = require('cors');
+const helmet = require('helmet');
+
 const dotEnv = require("dotenv");
 const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
+
 const app = express();
 const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
+const studyGroupRoutes = require("./src/routes/studyGroupRoutes")
+
 
 dotEnv.config();
 
@@ -22,9 +30,15 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Define Routes
+
+app.use('/admin', require('./src/routes/admin'));
+app.use('/platform-info', require('./src/routes/platformInfo'));
+app.use("/api/study-groups", studyGroupRoutes)
+
 app.use("/admin", require("./src/routes/admin"));
 app.use("/platform-info", require("./src/routes/platformInfo"));
 app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");
@@ -51,3 +65,11 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+// Add this to your existing server.js file
+
+
+
+
+
+
