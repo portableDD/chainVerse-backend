@@ -3,8 +3,14 @@ const dotEnv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
+
+const dotEnv = require("dotenv");
+const morgan = require("morgan");
+const cors = require("cors");
+const helmet = require("helmet");
+
 const app = express();
-const dbConnection = require('./src/config/database/connection');
+const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
 const studyGroupRoutes = require("./src/routes/studyGroupRoutes")
 
@@ -19,14 +25,20 @@ dbConnection();
 app.use(cors());
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // Define Routes
+
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
 app.use("/api/study-groups", studyGroupRoutes)
+
+app.use("/admin", require("./src/routes/admin"));
+app.use("/platform-info", require("./src/routes/platformInfo"));
+app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");
