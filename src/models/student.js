@@ -59,6 +59,14 @@ const revokedTokenSchema = new mongoose.Schema({
    expiresAt: { type: Date, required: true }, // For cleanup
 });
 
+// indexing
+revokedTokenSchema.index({ token: 1, studentId: 1 })
+revokedTokenSchema.index(
+   { expiresAt: 1 },
+   {expireAfterSeconds: 0}
+) //for automatic refreshToken deletion after it expires
+
+
 exports.RevokedToken = mongoose.model("RevokedToken", revokedTokenSchema);
 exports.Student = mongoose.model("Student", studentSchema);
 

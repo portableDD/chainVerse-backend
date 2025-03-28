@@ -93,7 +93,7 @@ exports.emailverifySchema = Joi.object({
       }),
 });
 
-exports.forgotPasswordSchema = Joi.object({
+exports.emailValidateSchema = Joi.object({
    email: Joi.string()
       .min(6)
       .max(60)
@@ -147,3 +147,13 @@ exports.resetPasswordSchema = Joi.object({
          "any.required": "Verification code is required.",
       }),
 });
+
+exports.tokenValidationSchema = Joi.object({
+   refreshToken: Joi.string()
+      .required()
+      .messages({
+         'string.base': 'Token must be a string',
+         'string.empty': 'Token cannot be empty',
+         'any.required': 'Token is required'
+   })
+})
