@@ -91,7 +91,9 @@ exports.updateSubscriptionPlan = async (req, res) => {
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    const subscriptionPlan = await SubscriptionPlan.exists({ _id: mongoose.Types.ObjectId(planId) });
+    const subscriptionPlan = await SubscriptionPlan.exists({
+      _id: mongoose.Types.ObjectId(planId),
+    });
     if (!subscriptionPlan) {
       return res.status(404).json({ message: "Subscription plan not found" });
     }
@@ -101,8 +103,8 @@ exports.updateSubscriptionPlan = async (req, res) => {
     await organization.save();
 
     res.status(200).json({
-        message: "Successfully updated subscription plan",
-        data: organization
+      message: "Successfully updated subscription plan",
+      data: organization,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });

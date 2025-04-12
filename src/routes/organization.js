@@ -42,3 +42,5 @@ router.get(
   auth,
   organizationController.getSubscriptionPlanInvoice
 );
+
+module.exports = router;
