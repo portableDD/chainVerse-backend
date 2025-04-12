@@ -1,137 +1,121 @@
 const { Student, RevokedToken } = require("../models/student");
 const {
-   signUpSchema,
-   signInSchema,
-   emailverifySchema,
-   resetPasswordSchema,
-   emailValidateSchema,
-   tokenValidationSchema
+  signUpSchema,
+  signInSchema,
+  emailverifySchema,
+  resetPasswordSchema,
+  emailValidateSchema,
+  tokenValidationSchema
 } = require("../validators/authValidator");
 const { doHash, doCompare, doHmac, compareHmac } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/sendMail");
+const passport = require("../config/passport");
 
-const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; //5m
-const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000; //15m
-const REFRESH_TOKEN_EXPIRY = 1 * 24 * 60 * 60 * 1000; //1d
+const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5m
+const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000; // 15m
+const REFRESH_TOKEN_EXPIRY = 1 * 24 * 60 * 60 * 1000; // 1d
 const SALT_VALUE = 12;
 
 exports.signUp = async (req, res) => {
-   const { firstName, lastName, email, password } = req.body;
-   try {
-      await signUpSchema.validateAsync({ firstName, lastName, email, password });
-      // check if user already exist
-      const existingStudent = await Student.findOne({ email });
-      if (existingStudent) {
-         return res.status(400).json({
-            status: "fail",
-            message: "student already exist",
-         });
-      }
-      // hash password
-      const hashedPassword = await doHash(password, SALT_VALUE);
-      // save student to the database
-      const newStudent = await Student({
-         firstName,
-         lastName,
-         email,
-         password: hashedPassword,
+  // [Existing signUp logic remains unchanged]
+  const { firstName, lastName, email, password } = req.body;
+  try {
+    await signUpSchema.validateAsync({ firstName, lastName, email, password });
+    const existingStudent = await Student.findOne({ email });
+    if (existingStudent) {
+      return res.status(400).json({
+        status: "fail",
+        message: "student already exist",
       });
-      // generate verfication code
-      const verificationCode = Math.floor(Math.random() * 1e6).toString();
-      // send verification to student email
-      const info = await sendEmail(newStudent.email, verificationCode, "Account verification");
-      if (!info) {
-         return res.status(500).json({
-            status: "error",
-            message: "student registered successfully, failed to send verification code to email",
-         });
-      }
-      // hash the verification code using Hmac
-      const hashedVerificationCode = doHmac(verificationCode, process.env.CRYPTO_KEY);
-      // Save the hashed verification code and timestamp to the student
-      newStudent.verificationCode = hashedVerificationCode;
-      newStudent.verificationCodeValidation = Date.now();
-      await newStudent.save();
-      // return response back to client
-      return res.status(201).json({
-         status: "success",
-         message: "student registered successfully, please verify your email",
+    }
+    const hashedPassword = await doHash(password, SALT_VALUE);
+    const newStudent = await Student({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    });
+    const verificationCode = Math.floor(Math.random() * 1e6).toString();
+    const info = await sendEmail(newStudent.email, verificationCode, "Account verification");
+    if (!info) {
+      return res.status(500).json({
+        status: "error",
+        message: "student registered successfully, failed to send verification code to email",
       });
-   } catch (error) {
-      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details
-         ? error.details[0].message
-         : "Something is wrong, we are working on it";
-      return res.status(statusCode).json({ status: "fail", message });
-   }
+    }
+    const hashedVerificationCode = doHmac(verificationCode, process.env.CRYPTO_KEY);
+    newStudent.verificationCode = hashedVerificationCode;
+    newStudent.verificationCodeValidation = Date.now();
+    await newStudent.save();
+    return res.status(201).json({
+      status: "success",
+      message: "student registered successfully, please verify your email",
+    });
+  } catch (error) {
+    const statusCode = error.details ? 400 : 500;
+    const message = error.details ? error.details[0].message : "Something is wrong, we are working on it";
+    return res.status(statusCode).json({ status: "fail", message });
+  }
 };
 
 exports.signIn = async (req, res) => {
-   const { email, password } = req.body;
-   try {
-      await signInSchema.validateAsync({ email, password });
-      // Check if student exists
-      const existingStudent = await Student.findOne({ email }).select("+password");
-      if (!existingStudent) {
-         return res.status(401).json({
-            status: "fail",
-            message: "Student not found",
-         });
-      }
-      // Check if password is correct
-      const correctPassword = await doCompare(password, existingStudent.password);
-      if (!correctPassword) {
-         return res.status(401).json({
-            status: "fail",
-            message: "Invalid password",
-         });
-      }
-      // check if student is verified
-      if (!existingStudent.verified) {
-         return res.status(403).json({
-            status: "fail",
-            message: "account not verified",
-         });
-      }
-      // generate access token and refresh token
-      const accessToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_ACCESS_TOKEN, {
-         expiresIn: "15m",
+  // [Existing signIn logic remains unchanged]
+  const { email, password } = req.body;
+  try {
+    await signInSchema.validateAsync({ email, password });
+    const existingStudent = await Student.findOne({ email }).select("+password");
+    if (!existingStudent) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Student not found",
       });
-      const refreshToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_REFRESH_TOKEN, {
-         expiresIn: "24h",
+    }
+    const correctPassword = await doCompare(password, existingStudent.password);
+    if (!correctPassword) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid password",
       });
-      // hash and save refresh token in DB
-      const hashedRefreshToken = doHmac(refreshToken, process.env.CRYPTO_KEY);
-      existingStudent.refreshToken = hashedRefreshToken;
-      await existingStudent.save();
-      // set cookie with token
-      res.cookie("accessToken", accessToken, {
-         maxAge: ACCESS_TOKEN_EXPIRY,
-         sameSite: "lax", //  CSRF protection
-         httpOnly: true,
-         secure: process.env.NODE_ENV === "production",
+    }
+    if (!existingStudent.verified) {
+      return res.status(403).json({
+        status: "fail",
+        message: "account not verified",
       });
-      res.cookie("refreshToken", refreshToken, {
-         maxAge: REFRESH_TOKEN_EXPIRY,
-         sameSite: "strict", //  CSRF protection
-         httpOnly: true,
-         secure: process.env.NODE_ENV === "production",
-         path: "/refresh-token",
-      });
-
-      return res.status(200).json({
-         status: "success",
-         message: "Logged in",
-         accessToken,
-      });
-   } catch (error) {
-      const statusCode = error.details ? 400 : 500; // 400 for validation, 500 for server errors
-      const message = error.details
-         ? error.details[0].message
-         : "Something is wrong, we are fixing it";
-      return res.status(statusCode).json({ status: "fail", message });
-   }
+    }
+    const accessToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_ACCESS_TOKEN, {
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign({ sub: existingStudent._id }, process.env.JWT_REFRESH_TOKEN, {
+      expiresIn: "24h",
+    });
+    const hashedRefreshToken = doHmac(refreshToken, process.env.CRYPTO_KEY);
+    existingStudent.refreshToken = hashedRefreshToken;
+    await existingStudent.save();
+    res.cookie("accessToken", accessToken, {
+      maxAge: ACCESS_TOKEN_EXPIRY,
+      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+    res.cookie("refreshToken", refreshToken, {
+      maxAge: REFRESH_TOKEN_EXPIRY,
+      sameSite: "strict",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/refresh-token",
+    });
+    return res.status(200).json({
+      status: "success",
+      message: "Logged in",
+      accessToken,
+    });
+  } catch (error) {
+    const statusCode = error.details ? 400 : 500;
+    const message = error.details ? error.details[0].message : "Something is wrong, we are fixing it";
+    return res.status(statusCode).json({ status: "fail", message });
+  }
 };
 
 exports.signOut = async (req, res) => {
@@ -509,3 +493,52 @@ exports.resendVerificationCode = async (req, res) => {
       return res.status(statusCode).json({ status: "fail", message });
    }
 };
+
+exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
+
+exports.googleCallback = [
+   passport.authenticate('google', { failureRedirect: '/login' }),
+   async (req, res) => {
+     try {
+       const student = req.user;
+       if (!student) {
+         return res.status(401).json({ status: "fail", message: "Authentication failed" });
+       }
+ 
+       // Generate JWT tokens
+       const accessToken = jwt.sign({ sub: student._id }, process.env.JWT_ACCESS_TOKEN, {
+         expiresIn: "15m",
+       });
+       const refreshToken = jwt.sign({ sub: student._id }, process.env.JWT_REFRESH_TOKEN, {
+         expiresIn: "24h",
+       });
+       const hashedRefreshToken = doHmac(refreshToken, process.env.CRYPTO_KEY);
+       student.refreshToken = hashedRefreshToken;
+       await student.save();
+ 
+       // Set cookies
+       res.cookie("accessToken", accessToken, {
+         maxAge: ACCESS_TOKEN_EXPIRY,
+         sameSite: "lax",
+         httpOnly: true,
+         secure: process.env.NODE_ENV === "production",
+       });
+       res.cookie("refreshToken", refreshToken, {
+         maxAge: REFRESH_TOKEN_EXPIRY,
+         sameSite: "strict",
+         httpOnly: true,
+         secure: process.env.NODE_ENV === "production",
+         path: "/refresh-token",
+       });
+ 
+       return res.status(200).json({
+         status: "success",
+         message: "Logged in via Google",
+         accessToken,
+       });
+     } catch (error) {
+       console.error(error);
+       return res.status(500).json({ status: "fail", message: "Something went wrong during Google authentication" });
+     }
+   }
+ ];
