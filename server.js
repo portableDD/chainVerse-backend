@@ -3,11 +3,14 @@ const dotEnv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
+const { handleMulterErrors } = require('./src/middlewares/errorHandler');
+const organizationRoutes = require('./src/routes/organization');
 
-const dotEnv = require("dotenv");
-const morgan = require("morgan");
-const cors = require("cors");
-const helmet = require("helmet");
+// const dotEnv = require("dotenv");
+// const morgan = require("morgan");
+// const cors = require("cors");
+// const helmet = require("helmet");
 
 const app = express();
 const dbConnection = require("./src/config/database/connection");
@@ -29,7 +32,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(morgan("dev"));
 
-// Define Routes
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Error handling middleware
+app.use(handleMulterErrors);
+
+// Routes
+app.use('/organization', organizationRoutes);
 
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
