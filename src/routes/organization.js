@@ -43,24 +43,38 @@ router.get(
 );
 
 // Profile management routes
+
+// @route GET /organization/profile
+// @desc Fetches the logged-in user's profile details
+// @route POST /organization/profile
+// @desc Register a new user with email and password, returns JWT token upon successful registration
 router
 	.route('/profile')
 	.get(auth, userOrganizationController.getProfile)
 	.post(userOrganizationController.registerUser);
 
+// @route PUT /organization/profile/update
+// @desc Updates user profile information including fullName, email, phoneNumber, and position
 router.put('/profile/update', auth, userOrganizationController.updateProfile);
 
+// @route GET /organization/verify-email
+// @desc Verifies user's email address by validating the verification token and sets isEmailVerified to true
 router.get(
 	'/profile/verify-email',
 	auth,
 	userOrganizationController.verifyEmail
 );
 
+// @route PUT /organization/profile/change-password
+// @desc Allows users to change their password after verifying current password
 router.put(
 	'/profile/change-password',
 	auth,
 	userOrganizationController.changePassword
 );
+
+// @route POST /organization/profile/upload-image
+// @desc Handles profile image upload, validates file type/size, and updates user profile
 router.post(
 	'/profile/upload-image',
 	auth,
