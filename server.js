@@ -7,6 +7,7 @@ const path = require('path');
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -44,12 +45,10 @@ app.use('/organization', organizationRoutes);
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
 app.use('/api/study-groups', studyGroupRoutes);
-
-app.use('/admin', require('./src/routes/admin'));
-app.use('/platform-info', require('./src/routes/platformInfo'));
 app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
-
 app.use('/section', aboutSectionRoutes);
+app.use('/api', removalRequestRoutes);
+
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
