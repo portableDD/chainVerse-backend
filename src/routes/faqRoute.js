@@ -3,7 +3,7 @@ const router = express.Router();
 const faqController = require('../controllers/faqController');
 const faqValidator = require('../validators/faqValidator');
 const { authMiddleware } = require('../middlewares/authMiddleware');
-const adminMiddleware = require('../middlewares/adminMiddleware');
+const adminMiddleware = require('../middlewares/admin');
 
 // Public routes
 router.get('/', faqController.getAllFAQs);
