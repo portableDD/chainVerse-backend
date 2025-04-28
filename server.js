@@ -8,6 +8,7 @@ const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
+const faqRoutes = require('./src/routes/faqRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -48,6 +49,7 @@ app.use('/api/study-groups', studyGroupRoutes);
 app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
 app.use('/section', aboutSectionRoutes);
 app.use('/api', removalRequestRoutes);
+app.use('/settings/faqs', faqRoutes);
 
 
 app.get('/', (req, res) => {
