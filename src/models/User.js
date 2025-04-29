@@ -37,6 +37,14 @@ const UserSchema = new mongoose.Schema({
 		type: Boolean,
 		default: false,
 	},
+
+	twoFASecret: {
+		 type: String 
+		}, 
+  	is2FAEnabled: {
+		 type: Boolean,
+		 default: false
+		 },
 	createdAt: {
 		type: Date,
 		default: Date.now,
