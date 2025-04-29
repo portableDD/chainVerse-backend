@@ -7,6 +7,7 @@ const path = require('path');
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+const auth2FA = require('./src/routes/2factorRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -40,6 +41,7 @@ app.use(handleMulterErrors);
 
 // Routes
 app.use('/organization', organizationRoutes);
+app.use('auth', auth2FA);
 
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
