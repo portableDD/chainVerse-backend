@@ -7,8 +7,11 @@ const path = require('path');
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+const auth2FA = require('./src/routes/2factorRoute');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 const faqRoutes = require('./src/routes/faqRoute');
+const financialAidRoutes = require('./src/routes/financialAidRoute');
+const courseRoutes = require('./src/routes/courseRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -42,6 +45,7 @@ app.use(handleMulterErrors);
 
 // Routes
 app.use('/organization', organizationRoutes);
+app.use('auth', auth2FA);
 
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
@@ -51,6 +55,8 @@ app.use('/section', aboutSectionRoutes);
 app.use('/api', removalRequestRoutes);
 app.use('/settings/faqs', faqRoutes);
 
+app.use('/financial-aid', financialAidRoutes);
+app.use('/api', courseRoutes);
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
@@ -77,3 +83,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`Server listening on port ${PORT}`);
 });
+
+module.exports = app;
