@@ -1,13 +1,15 @@
-const express = require('express');
-const dotEnv = require('dotenv');
-const morgan = require('morgan');
-const cors = require('cors');
-const helmet = require('helmet');
-const path = require('path');
-const { handleMulterErrors } = require('./src/middlewares/errorHandler');
-const organizationRoutes = require('./src/routes/organization');
-const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
-const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
+const express = require("express");
+const dotEnv = require("dotenv");
+const morgan = require("morgan");
+const cors = require("cors");
+const helmet = require("helmet");
+const path = require("path");
+const { handleMulterErrors } = require("./src/middlewares/errorHandler");
+const organizationRoutes = require("./src/routes/organization");
+const aboutSectionRoutes = require("./src/routes/aboutSectionRoutes");
+const removalRequestRoutes = require("./src/routes/accountRemovalRoute");
+const courseReportRoutes = require("./src/routes/courseReportRoutes");
+const { initScheduler } = require("./src/services/reportScheduler");
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -15,9 +17,9 @@ const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 // const helmet = require("helmet");
 
 const app = express();
-const dbConnection = require('./src/config/database/connection');
-const router = require('./src/routes/index');
-const studyGroupRoutes = require('./src/routes/studyGroupRoutes');
+const dbConnection = require("./src/config/database/connection");
+const router = require("./src/routes/index");
+const studyGroupRoutes = require("./src/routes/studyGroupRoutes");
 
 dotEnv.config();
 
@@ -31,47 +33,50 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Error handling middleware
 app.use(handleMulterErrors);
 
 // Routes
-app.use('/organization', organizationRoutes);
+app.use("/organization", organizationRoutes);
 
-app.use('/admin', require('./src/routes/admin'));
-app.use('/platform-info', require('./src/routes/platformInfo'));
-app.use('/api/study-groups', studyGroupRoutes);
-app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
-app.use('/section', aboutSectionRoutes);
-app.use('/api', removalRequestRoutes);
+app.use("/admin", require("./src/routes/admin"));
+app.use("/platform-info", require("./src/routes/platformInfo"));
+app.use("/api/study-groups", studyGroupRoutes);
+app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
+app.use("/section", aboutSectionRoutes);
+app.use("/api", removalRequestRoutes);
+app.use("/reports", courseReportRoutes);
 
-
-app.get('/', (req, res) => {
-	res.send('Welcome to ChainVerse Academy');
+app.get("/", (req, res) => {
+  res.send("Welcome to ChainVerse Academy");
 });
 
-app.use('/api', router);
+app.use("/api", router);
 
 app.use((req, res, next) => {
-	const error = new Error('Not found');
-	error.status = 404;
-	next(error);
+  const error = new Error("Not found");
+  error.status = 404;
+  next(error);
 });
 
 app.use((error, req, res, next) => {
-	res.status(error.status || 500).send({
-		status: error.status || 500,
-		message: error.message,
-		body: {},
-	});
+  res.status(error.status || 500).send({
+    status: error.status || 500,
+    message: error.message,
+    body: {},
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 
+// Initialize report scheduler
+initScheduler();
+
 app.listen(PORT, () => {
-	console.log(`Server listening on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
