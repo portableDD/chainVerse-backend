@@ -11,7 +11,7 @@ const auth2FA = require('./src/routes/2factorRoute');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 const financialAidRoutes = require('./src/routes/financialAidRoute');
 const courseRoutes = require('./src/routes/courseRoute');
-
+const contactUsRoutes = require('./src/routes/contactMessageRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -55,6 +55,7 @@ app.use('/section', aboutSectionRoutes);
 app.use('/api', removalRequestRoutes);
 app.use('/financial-aid', financialAidRoutes);
 app.use('/api', courseRoutes);
+app.use('/api', contactUsRoutes);
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
