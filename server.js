@@ -8,6 +8,8 @@ const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
+const financialAidRoutes = require('./src/routes/financialAidRoute');
+const courseRoutes = require('./src/routes/courseRoute');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -48,7 +50,8 @@ app.use('/api/study-groups', studyGroupRoutes);
 app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
 app.use('/section', aboutSectionRoutes);
 app.use('/api', removalRequestRoutes);
-
+app.use('/financial-aid', financialAidRoutes);
+app.use('/api', courseRoutes);
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
@@ -75,3 +78,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`Server listening on port ${PORT}`);
 });
+
+module.exports = app;
