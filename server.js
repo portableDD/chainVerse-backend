@@ -1,15 +1,21 @@
-const express = require("express");
-const dotEnv = require("dotenv");
-const morgan = require("morgan");
-const cors = require("cors");
-const helmet = require("helmet");
-const path = require("path");
-const { handleMulterErrors } = require("./src/middlewares/errorHandler");
-const organizationRoutes = require("./src/routes/organization");
-const aboutSectionRoutes = require("./src/routes/aboutSectionRoutes");
-const removalRequestRoutes = require("./src/routes/accountRemovalRoute");
-const courseReportRoutes = require("./src/routes/courseReportRoutes");
-const { initScheduler } = require("./src/services/reportScheduler");
+const express = require('express');
+const dotEnv = require('dotenv');
+const morgan = require('morgan');
+const cors = require('cors');
+const helmet = require('helmet');
+const path = require('path');
+
+const { handleMulterErrors } = require('./src/middlewares/errorHandler');
+
+const organizationRoutes = require('./src/routes/organization');
+const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+const auth2FA = require('./src/routes/2factorRoute');
+const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
+const financialAidRoutes = require('./src/routes/financialAidRoute');
+const courseRoutes = require('./src/routes/courseRoute');
+const courseReportRoutes = require('./src/routes/courseReportRoutes');
+
+const { initScheduler } = require('./src/services/reportScheduler');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -42,19 +48,23 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(handleMulterErrors);
 
 // Routes
-app.use("/organization", organizationRoutes);
+app.use('/organization', organizationRoutes);
+app.use('/auth', auth2FA);
 
-app.use("/admin", require("./src/routes/admin"));
-app.use("/platform-info", require("./src/routes/platformInfo"));
-app.use("/api/study-groups", studyGroupRoutes);
-app.use("/admin/subscription", require("./src/routes/subscriptionPlanRoutes"));
-app.use("/section", aboutSectionRoutes);
-app.use("/api", removalRequestRoutes);
-app.use("/reports", courseReportRoutes);
+app.use('/admin', require('./src/routes/admin'));
+app.use('/platform-info', require('./src/routes/platformInfo'));
+app.use('/api/study-groups', studyGroupRoutes);
+app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
+app.use('/section', aboutSectionRoutes);
+app.use('/api', removalRequestRoutes);
+app.use('/reports', courseReportRoutes);
+app.use('/financial-aid', financialAidRoutes);
+app.use('/api', courseRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Welcome to ChainVerse Academy");
+app.get('/', (req, res) => {
+	res.send('Welcome to ChainVerse Academy');
 });
+
 
 app.use("/api", router);
 
@@ -80,3 +90,5 @@ initScheduler();
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+module.exports = app;
