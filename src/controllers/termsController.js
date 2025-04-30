@@ -1,5 +1,6 @@
 const Terms = require('../models/Terms');
 const mongoose = require('mongoose');
+const { sanitizeContent } = require('../utils/sanitizer');
 
 // Create terms and conditions
 exports.createTerms = async (req, res) => {
@@ -12,8 +13,11 @@ exports.createTerms = async (req, res) => {
       return res.status(400).json({ msg: 'Term with same title already exists' });
     }
 
+    // Sanitize content
+    const cleanContent = sanitizeContent(content);
+
     // Create new terms with given data
-    const newTerms = new Terms({ title, content });
+    const newTerms = new Terms({ title, content: cleanContent });
     await newTerms.save();
 
     res.status(201).json({ success: true, data: newTerms });
@@ -69,8 +73,14 @@ exports.updateTerm = async (req, res) => {
       return res.status(400).json({ msg: 'Invalid term ID.' });
     }
 
+    // Build updateFields object with optional sanitization
+    const updateFields = {
+      ...(title && { title }), // spread title if it exists
+      ...(content && { content: sanitizeContent(content) }) // sanitize and spread content if avaibale
+    };
+
     const updatedTerm = await Terms.findByIdAndUpdate(id,
-      { title, content },
+      updateFields,
       { new: true, runValidators: true }
     );
 
