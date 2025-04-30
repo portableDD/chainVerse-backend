@@ -1,116 +1,202 @@
-const Certificate = require("../models/Certificate");
-const { createHash } = require("crypto");
-const AdmZip = require("adm-zip");
-const path = require("path");
+const Certificate = require('../models/Certificate');
+const ShareAnalytics = require('../models/ShareAnalytics');
+const { generatePublicHash } = require('../utils/hashGenerator');
+const { uploadToCloudStorage, getSignedUrl } = require('../utils/cloudStorage');
+const { generateCertificateImage } = require('../utils/certificateGenerator');
+const logger = require('../utils/logger');
 
-// Helper function to verify certificate ownership
-const verifyCertificateOwnership = async (certificateId, userId) => {
-  const certificate = await Certificate.findOne({
-    _id: certificateId,
-    studentId: userId,
-    status: "ACTIVE"
-  });
-  return certificate;
-};
-
-// Get all certificates for the authenticated student
-exports.getMyCertificates = async (req, res) => {
+/**
+ * Generate a public link for a certificate
+ * @route GET /certificates/:certificateId/public-link
+ */
+exports.generatePublicLink = async (req, res) => {
   try {
-    const { courseId, startDate, endDate } = req.query;
-    let query = { studentId: req.user.id, status: "ACTIVE" };
-
-    if (courseId) {
-      query.courseId = courseId;
-    }
-
-    if (startDate || endDate) {
-      query.issueDate = {};
-      if (startDate) query.issueDate.$gte = new Date(startDate);
-      if (endDate) query.issueDate.$lte = new Date(endDate);
-    }
-
-    const certificates = await Certificate.find(query)
-      .populate("courseId", "title")
-      .sort({ issueDate: -1 });
-
-    res.status(200).json({
-      success: true,
-      data: certificates
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving certificates",
-      error: error.message
-    });
-  }
-};
-
-// Get a single certificate
-exports.getCertificate = async (req, res) => {
-  try {
-    const certificate = await verifyCertificateOwnership(req.params.certificateId, req.user.id);
+    const { certificateId } = req.params;
+    const userId = req.user.id; // Assuming user is authenticated and ID is available in req.user
+    
+    const certificate = await Certificate.findById(certificateId);
     
     if (!certificate) {
-      return res.status(404).json({
-        success: false,
-        message: "Certificate not found or access denied"
-      });
+      return res.status(404).json({ error: 'Certificate not found' });
     }
-
-    res.status(200).json({
-      success: true,
-      data: certificate
+    
+    if (certificate.studentId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized access to certificate' });
+    }
+    
+    if (!certificate.publicHash) {
+      certificate.publicHash = generatePublicHash(certificate._id);
+      await certificate.save();
+    }
+    
+    const publicUrl = `${process.env.BASE_URL}/certificates/public/${certificate.publicHash}`;
+    
+    return res.status(200).json({
+      publicUrl,
+      metadata: {
+        studentName: certificate.studentName,
+        courseTitle: certificate.courseTitle,
+        issueDate: certificate.issueDate,
+        verificationHash: certificate.publicHash
+      }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving certificate",
-      error: error.message
-    });
+    logger.error(`Error generating public link: ${error.message}`);
+    return res.status(500).json({ error: 'Failed to generate public link' });
   }
 };
 
-// Download all certificates as ZIP
-exports.downloadAllCertificates = async (req, res) => {
+/**
+ * Get certificate metadata for social sharing
+ * @route GET /certificates/:certificateId/share-metadata
+ */
+exports.getShareMetadata = async (req, res) => {
   try {
-    const certificates = await Certificate.find({
-      studentId: req.user.id,
-      status: "ACTIVE"
-    }).populate("courseId", "title");
-
-    if (!certificates.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No certificates found"
-      });
-    }
-
-    const zip = new AdmZip();
+    const { certificateId } = req.params;
+    const userId = req.user.id;
     
-    // Add each certificate PDF to the ZIP
-    for (const cert of certificates) {
-      const pdfContent = await downloadPDF(cert.pdfUrl); // You'll need to implement this based on your storage solution
-      zip.addFile(`${cert.metadata.courseName}_${cert.certificateNumber}.pdf`, pdfContent);
-    }
-
-    // Set response headers
-    res.set('Content-Type', 'application/zip');
-    res.set('Content-Disposition', `attachment; filename="certificates_${req.user.id}.zip"`);
+    const certificate = await Certificate.findById(certificateId);
     
-    // Send the ZIP file
-    res.send(zip.toBuffer());
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error downloading certificates",
-      error: error.message
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    
+    if (certificate.studentId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized access to certificate' });
+    }
+    
+    if (!certificate.publicHash) {
+      certificate.publicHash = generatePublicHash(certificate._id);
+      await certificate.save();
+    }
+    
+    if (!certificate.imageUrl) {
+      const certificateImage = await generateCertificateImage(certificate);
+      const imageKey = `certificates/${certificate._id}/certificate.png`;
+      const uploadResult = await uploadToCloudStorage(imageKey, certificateImage);
+      
+      certificate.imageUrl = uploadResult.url;
+      await certificate.save();
+    }
+    
+    const verificationLink = `${process.env.BASE_URL}/certificate/verify/${certificate.publicHash}`;
+    
+    const shareMessage = `Just completed the ${certificate.courseTitle} course on ChainVerse Academy!`;
+    
+    return res.status(200).json({
+      courseTitle: certificate.courseTitle,
+      studentName: certificate.studentName,
+      certificateThumbnail: certificate.imageUrl,
+      shareMessage,
+      verificationLink
     });
+  } catch (error) {
+    logger.error(`Error getting share metadata: ${error.message}`);
+    return res.status(500).json({ error: 'Failed to get share metadata' });
   }
 };
 
-// Generate verification hash
-exports.generateVerificationHash = (certificate) => {
-  const data = `${certificate.studentId}${certificate.courseId}${certificate.issueDate}${certificate.certificateNumber}`;
-  return createHash('sha256').update(data).digest('hex');
+/**
+ * Track certificate sharing analytics
+ * @route POST /certificates/:certificateId/track-share
+ */
+exports.trackShare = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const { platform } = req.body;
+    const userId = req.user.id;
+    
+    if (!platform) {
+      return res.status(400).json({ error: 'Platform is required' });
+    }
+    
+    const certificate = await Certificate.findById(certificateId);
+    
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    
+    if (certificate.studentId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized access to certificate' });
+    }
+    
+    const shareEvent = new ShareAnalytics({
+      certificateId,
+      userId,
+      platform,
+      sharedAt: new Date()
+    });
+    
+    await shareEvent.save();
+    
+    return res.status(200).json({ message: 'Share event recorded successfully' });
+  } catch (error) {
+    logger.error(`Error tracking share: ${error.message}`);
+    return res.status(500).json({ error: 'Failed to track share event' });
+  }
 };
+
+/**
+ * Get certificate by public hash (public endpoint)
+ * @route GET /certificates/public/:publicHash
+ */
+exports.getPublicCertificate = async (req, res) => {
+  try {
+    const { publicHash } = req.params;
+    
+    const certificate = await Certificate.findOne({ publicHash });
+    
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    
+    return res.status(200).json({
+      studentName: certificate.studentName,
+      courseTitle: certificate.courseTitle,
+      issueDate: certificate.issueDate,
+      imageUrl: certificate.imageUrl,
+      verificationHash: certificate.publicHash
+    });
+  } catch (error) {
+    logger.error(`Error retrieving public certificate: ${error.message}`);
+    return res.status(500).json({ error: 'Failed to retrieve certificate' });
+  }
+};
+
+/**
+ * Return an existing certificate with all details
+ * Update to include the image URL for sharing
+ * @route GET /certificates/:certificateId
+ */
+exports.getCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    const userId = req.user.id;
+    
+    // Find certificate
+    const certificate = await Certificate.findById(certificateId);
+    
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    
+    if (certificate.studentId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized access to certificate' });
+    }
+    
+    if (!certificate.imageUrl) {
+      const certificateImage = await generateCertificateImage(certificate);
+      const imageKey = `certificates/${certificate._id}/certificate.png`;
+      const uploadResult = await uploadToCloudStorage(imageKey, certificateImage);
+      
+      certificate.imageUrl = uploadResult.url;
+      await certificate.save();
+    }
+    
+    return res.status(200).json(certificate);
+  } catch (error) {
+    logger.error(`Error retrieving certificate: ${error.message}`);
+    return res.status(500).json({ error: 'Failed to retrieve certificate' });
+  }
+};
+
