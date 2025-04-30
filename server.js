@@ -45,6 +45,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(handleMulterErrors);
 
 // Routes
+app.use('/api', router);
 app.use('/organization', organizationRoutes);
 app.use('auth', auth2FA);
 
@@ -63,8 +64,6 @@ app.use('/api', contactUsRoutes);
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
 });
-
-app.use('/api', router);
 
 app.use((req, res, next) => {
 	const error = new Error('Not found');
