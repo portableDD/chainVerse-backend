@@ -8,11 +8,13 @@ const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const auth2FA = require('./src/routes/2factorRoute');
+const logins = require('./src/routes/loginLogRoute');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 const faqRoutes = require('./src/routes/faqRoute');
 const financialAidRoutes = require('./src/routes/financialAidRoute');
 const courseRoutes = require('./src/routes/courseRoute');
 const contactUsRoutes = require('./src/routes/contactMessageRoute');
+
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -48,6 +50,7 @@ app.use(handleMulterErrors);
 app.use('/api', router);
 app.use('/organization', organizationRoutes);
 app.use('auth', auth2FA);
+app.use('auth', logins);
 
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
