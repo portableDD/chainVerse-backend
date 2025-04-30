@@ -21,7 +21,9 @@
   },
   "homepage": "https://github.com/Gen-x-academy/chainVerse-backend#readme",
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -32,24 +34,25 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "joi": "^17.13.3",
+    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.12.2",
+    "mongoose": "^8.14.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.2",
-    "node-cron": "^3.0.3",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
     "qrcode": "^1.5.4",
+    "redis": "^4.7.0",
     "speakeasy": "^2.0.0",
     "uuid": "^11.1.0"
   },
-  "keywords": [],
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "mongodb-memory-server": "^10.1.4",
     "supertest": "^7.1.0"
-  }
+  },
+  "keywords": []
 }

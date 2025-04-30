@@ -11,6 +11,7 @@ const { doHash, doCompare, doHmac, compareHmac } = require("../utils/hashing");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/sendMail");
 const passport = require("../config/passport");
+const LoginLog = require("../models/loginsLog");
 
 const VERIFICATION_CODE_EXPIRY = 5 * 60 * 1000; // 5m
 const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000; // 15m
@@ -62,6 +63,8 @@ exports.signUp = async (req, res) => {
 exports.signIn = async (req, res) => {
   // [Existing signIn logic remains unchanged]
   const { email, password } = req.body;
+  const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;   
+  const userAgent = req.get('User-Agent'); 
   try {
     await signInSchema.validateAsync({ email, password });
     const existingStudent = await Student.findOne({ email }).select("+password");
@@ -93,6 +96,13 @@ exports.signIn = async (req, res) => {
     const hashedRefreshToken = doHmac(refreshToken, process.env.CRYPTO_KEY);
     existingStudent.refreshToken = hashedRefreshToken;
     await existingStudent.save();
+    await LoginLog.create({
+      userId: user._id, 
+      ipAddress,
+      device: parseDevice(userAgent),
+      browser: parseBrowser(userAgent),
+      status: loginSuccess ? 'success' : 'failure',
+    });
     res.cookie("accessToken", accessToken, {
       maxAge: ACCESS_TOKEN_EXPIRY,
       sameSite: "lax",
