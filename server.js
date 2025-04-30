@@ -8,12 +8,14 @@ const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const auth2FA = require('./src/routes/2factorRoute');
+const logins = require('./src/routes/loginLogRoute');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 const faqRoutes = require('./src/routes/faqRoute');
 const financialAidRoutes = require('./src/routes/financialAidRoute');
 const courseRoutes = require('./src/routes/courseRoute');
 const contactUsRoutes = require('./src/routes/contactMessageRoute');
 const nftRoutes = require('./src/routes/nftRoute');
+
 
 
 // const dotEnv = require("dotenv");
@@ -47,8 +49,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(handleMulterErrors);
 
 // Routes
+app.use('/api', router);
 app.use('/organization', organizationRoutes);
 app.use('auth', auth2FA);
+app.use('auth', logins);
 
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
@@ -67,8 +71,6 @@ app.use('/api', nftRoutes);
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
 });
-
-app.use('/api', router);
 
 app.use((req, res, next) => {
 	const error = new Error('Not found');
