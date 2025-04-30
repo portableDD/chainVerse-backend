@@ -1,18 +1,16 @@
 const express = require('express');
-const router = express.Router();
 const certificateController = require('../controllers/certificateController');
-const auth = require('../middlewares/auth');
+const { authenticate } = require('../middleware/auth');
 
-// Protect all routes
-router.use(auth);
+const router = express.Router();
 
-// Get all certificates for the authenticated student
-router.get('/my-certificates', certificateController.getMyCertificates);
+// Certificate routes
+router.get('/:certificateId', authenticate, certificateController.getCertificate);
+router.get('/:certificateId/public-link', authenticate, certificateController.generatePublicLink);
+router.get('/:certificateId/share-metadata', authenticate, certificateController.getShareMetadata);
+router.post('/:certificateId/track-share', authenticate, certificateController.trackShare);
 
-// Get a single certificate
-router.get('/:certificateId', certificateController.getCertificate);
-
-// Download all certificates as ZIP
-router.get('/my-certificates/download-all', certificateController.downloadAllCertificates);
+// Public routes - no authentication required
+router.get('/public/:publicHash', certificateController.getPublicCertificate);
 
 module.exports = router;
