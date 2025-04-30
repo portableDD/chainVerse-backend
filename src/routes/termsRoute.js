@@ -9,12 +9,12 @@ const { createTermsValidator, updateTermsValidator } = require('../validators/te
 const { createTerms, getAllTerms, getTermsById, updateTerm, deleteTerm } = require('../controllers/termsController');
 
 // public routes
-router.get('/settings/terms', getAllTerms);
-router.get('/settings/terms/:id', getTermsById);
+router.get('/', getAllTerms);
+router.get('/:id', getTermsById);
 
 // Admin only routes
-router.post('/settings/terms', [auth, adminAuthorization, createTermsValidator], createTerms);
-router.patch('/settings/terms/:id', [auth, adminAuthorization, updateTermsValidator], updateTerm);
-router.delete('/settings/terms/:id', [auth, adminAuthorization], deleteTerm);
+router.post('/', [auth, adminAuthorization, createTermsValidator], createTerms);
+router.patch('/:id', [auth, adminAuthorization, updateTermsValidator], updateTerm);
+router.delete('/:id', [auth, adminAuthorization], deleteTerm);
 
 module.exports = router;

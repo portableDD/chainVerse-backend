@@ -39,4 +39,4 @@ const updateTermsValidator = [
   handleValidation
 ];
 
-module.exports = [createTermsValidator, updateTermsValidator];
+module.exports = { createTermsValidator, updateTermsValidator };
