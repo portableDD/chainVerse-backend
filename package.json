@@ -34,8 +34,9 @@
 		"express-validator": "^7.2.1",
 		"helmet": "^8.1.0",
 		"joi": "^17.13.3",
+		"json2csv": "^6.0.0-alpha.2",
 		"jsonwebtoken": "^9.0.2",
-		"mongoose": "^8.12.2",
+		"mongoose": "^8.14.1",
 		"morgan": "^1.10.0",
 		"multer": "^1.4.5-lts.2",
 		"nodemailer": "^6.10.0",
@@ -43,6 +44,7 @@
 		"passport": "^0.6.0",
 		"passport-google-oauth20": "^2.0.0",
 		"qrcode": "^1.5.4",
+		"redis": "^4.7.0",
 		"speakeasy": "^2.0.0",
 		"uuid": "^11.1.0"
 	},
