@@ -1,16 +1,23 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose');
 
-const certificateSchema = new Schema({
+const certificateSchema = new mongoose.Schema({
   studentId: {
-    type: Schema.Types.ObjectId,
-    ref: "User", // Assuming unified user model
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  studentName: {
+    type: String,
+    required: true
   },
   courseId: {
-    type: Schema.Types.ObjectId,
-    ref: "Course",
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true
+  },
+  courseTitle: {
+    type: String,
+    required: true
   },
   tutorName: {
     type: String,
@@ -18,8 +25,7 @@ const certificateSchema = new Schema({
   },
   issueDate: {
     type: Date,
-    default: Date.now,
-    required: true,
+    default: Date.now
   },
   completionDate: {
     type: Date,
@@ -27,17 +33,16 @@ const certificateSchema = new Schema({
   },
   certificateNumber: {
     type: String,
-    required: true,
     unique: true,
+    sparse: true
   },
-  status: {
+  publicHash: {
     type: String,
-    enum: ["ACTIVE", "REVOKED"],
-    default: "ACTIVE",
+    unique: true,
+    sparse: true
   },
-  pdfUrl: {
-    type: String,
-    required: true,
+  imageUrl: {
+    type: String
   },
   verificationId: {
     type: String,
@@ -58,7 +63,7 @@ const certificateSchema = new Schema({
   timestamps: true
 });
 
-// Compound index for performance
+// Compound index for optimized queries
 certificateSchema.index({ studentId: 1, courseId: 1 });
 
-module.exports = mongoose.model("Certificate", certificateSchema);
+module.exports = mongoose.model('Certificate', certificateSchema);
