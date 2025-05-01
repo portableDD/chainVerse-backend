@@ -17,10 +17,10 @@ const financialAidRoutes = require('./src/routes/financialAidRoute');
 const courseRoutes = require('./src/routes/courseRoute');
 const courseReportRoutes = require('./src/routes/courseReportRoutes');
 const contactUsRoutes = require('./src/routes/contactMessageRoute');
+
 const adminFinancialAidRoutes = require('./src/routes/adminFinancialAidRoutes'); // <-- Add this line
 const nftRoutes = require('./src/routes/nftRoute');
 const careerRoutes = require('./src/routes/careerRoutes');
-
 
 const { initScheduler } = require('./src/services/reportScheduler');
 
@@ -62,6 +62,7 @@ app.use('/settings/faqs', faqRoutes);
 app.use('/financial-aid', financialAidRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', contactUsRoutes);
+
 app.use('/admin/financial-aid', adminFinancialAidRoutes);
 
 app.use('/api', nftRoutes);
