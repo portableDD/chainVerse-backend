@@ -1,13 +1,9 @@
 const mongoose = require('mongoose');
 
-const certificateSchema = new mongoose.Schema({
+const CertificateSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  studentName: {
-    type: String,
+    ref: 'Student',
     required: true
   },
   courseId: {
@@ -15,55 +11,21 @@ const certificateSchema = new mongoose.Schema({
     ref: 'Course',
     required: true
   },
-  courseTitle: {
+  courseName: {
     type: String,
     required: true
-  },
-  tutorName: {
-    type: String,
-    required: true,
   },
   issueDate: {
     type: Date,
     default: Date.now
   },
-  completionDate: {
-    type: Date,
-    required: true,
+  shared: {
+    type: Boolean,
+    default: false
   },
-  certificateNumber: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  publicHash: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  imageUrl: {
+  url: {
     type: String
-  },
-  verificationId: {
-    type: String,
-    unique: true,
-    required: true,
-  },
-  verificationHash: {
-    type: String,
-    required: true,
-  },
-  metadata: {
-    courseName: String,
-    studentName: String,
-    completionDate: Date,
-    grade: String,
   }
-}, {
-  timestamps: true
 });
 
-// Compound index for optimized queries
-certificateSchema.index({ studentId: 1, courseId: 1 });
-
-module.exports = mongoose.model('Certificate', certificateSchema);
+module.exports = mongoose.model('Certificate', CertificateSchema);
