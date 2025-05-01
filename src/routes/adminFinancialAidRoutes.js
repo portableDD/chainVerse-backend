@@ -2,7 +2,8 @@ const express = require('express');
 const { 
     getAllApplications, 
     getApplicationById, 
-    reviewApplication 
+    reviewApplication, 
+    deleteApplication 
 } = require('../controllers/adminFinancialAidController');
 const auth = require('../middlewares/auth');
 const adminAuthorization = require('../middlewares/adminAuthorization');
@@ -15,13 +16,10 @@ router.get('/applications', auth, adminAuthorization, getAllApplications);
 // Route to get a single financial aid application by ID
 router.get('/applications/:id', auth, adminAuthorization, getApplicationById);
 
-// Route to review and respond to a financial aid application
-router.post('/applications/:id/review', auth, adminAuthorization, reviewApplication);
+// Route to make a decision (approve/deny) on a financial aid application
+router.post('/applications/:id/decision', auth, adminAuthorization, reviewApplication);
 
-
-router.delete('/applications/:id', auth, adminAuthorization, (req, res) => {
-
-    res.status(200).send({ message: 'Application deleted successfully' });
-});
+// Route to delete a financial aid application
+router.delete('/applications/:id', auth, adminAuthorization, deleteApplication);
 
 module.exports = router;
