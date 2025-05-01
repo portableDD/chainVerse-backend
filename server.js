@@ -12,6 +12,7 @@ const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
 const financialAidRoutes = require('./src/routes/financialAidRoute');
 const courseRoutes = require('./src/routes/courseRoute');
 const contactUsRoutes = require('./src/routes/contactMessageRoute');
+const adminFinancialAidRoutes = require('./src/routes/adminFinancialAidRoutes'); // <-- Add this line
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -56,6 +57,8 @@ app.use('/api', removalRequestRoutes);
 app.use('/financial-aid', financialAidRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', contactUsRoutes);
+app.use('/admin/financial-aid', adminFinancialAidRoutes);
+
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');

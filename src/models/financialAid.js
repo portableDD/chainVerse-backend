@@ -31,6 +31,12 @@ const FinancialAidSchema = new Schema({
 		},
 		default: 'Pending',
 	},
+
+	feedback: {
+        type: String,
+        maxlength: 1000,
+    },
+
 	createdAt: {
 		type: Date,
 		default: Date.now,
