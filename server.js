@@ -7,6 +7,7 @@ const path = require('path');
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+const privacyPolicyRoutes = require('./src/routes/privacyPolicyRoutes');
 
 // const dotEnv = require("dotenv");
 // const morgan = require("morgan");
@@ -48,6 +49,7 @@ app.use('/api/study-groups', studyGroupRoutes);
 app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
 app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
+app.use('/settings', privacyPolicyRoutes);
 
 app.use('/section', aboutSectionRoutes);
 
