@@ -1,8 +1,8 @@
 const express = require("express");
-const router = express.Router();
 const auth = require("../middlewares/auth");
 const {enable2FA, verify2FA, disable2FA} = require("./../controllers/Auth2FAController");
 
+const router = express.Router();
 
 router.post('/2fa/enable', auth, enable2FA);
 router.post('/2fa/verify', auth, verify2FA);
