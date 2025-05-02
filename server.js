@@ -29,6 +29,9 @@ const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
 const studyGroupRoutes = require("./src/routes/studyGroupRoutes");
 
+const sessionRoutes = require('./routes/session.routes');
+app.use('/sessions', sessionRoutes);
+
 dotEnv.config();
 dbConnection();
 
@@ -72,6 +75,11 @@ app.use('/api', careerRoutes);
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
 });
+
+//Swagger
+const setupSwaggerDocs = require('./swagger'); 
+setupSwaggerDocs(app);
+
 
 // 404 handler
 app.use((req, res, next) => {
