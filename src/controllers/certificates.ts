@@ -1,8 +1,12 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { Certificate } from "../models/Certificate";
-import { sendCertificateEmail } from "../emailUtils";  // Import the email function
+import { sendCertificateEmail } from "../emailUtils";
+import path from "path";
+import fs from "fs";
+import ejs from "ejs";
 
+// POST /certificates/generate
 export const generateCertificate = async (req: Request, res: Response) => {
   try {
     const {
@@ -13,12 +17,10 @@ export const generateCertificate = async (req: Request, res: Response) => {
       courseInstructorName,
     } = req.body;
 
-    // Generate certificate details
     const certificateId = uuidv4();
     const completionDate = new Date().toISOString();
-    const verificationLink = `https://chainverse.academy/certificates/${certificateId}`;
+    const verificationLink = `https://chainverse.academy/certificates/view/${certificateId}`;
 
-    // Create certificate object
     const newCertificate = new Certificate({
       certificateId,
       studentId,
@@ -31,10 +33,8 @@ export const generateCertificate = async (req: Request, res: Response) => {
       verificationLink,
     });
 
-    // Save certificate (simulate DB or implement logic)
     await newCertificate.save();
 
-    // Send email
     await sendCertificateEmail(
       studentEmail,
       studentFullName,
@@ -42,7 +42,6 @@ export const generateCertificate = async (req: Request, res: Response) => {
       verificationLink
     );
 
-    // Respond to client
     res.status(200).json({
       message: "Certificate generated and email sent!",
       certificate: newCertificate,
@@ -51,4 +50,22 @@ export const generateCertificate = async (req: Request, res: Response) => {
     console.error("Error generating certificate:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
+// GET /certificates/view/:certificateId
+export const viewCertificate = async (req: Request, res: Response) => {
+  const { certificateId } = req.params;
+
+  const certificate = await Certificate.findById(certificateId); // Replace with actual DB logic
+
+  if (!certificate) {
+    return res.status(404).send("Certificate not found");
+  }
+
+  const templatePath = path.join(__dirname, "../templates/certificateTemplate.html");
+  const templateContent = fs.readFileSync(templatePath, "utf-8");
+
+  const html = ejs.render(templateContent, certificate.toObject());
+
+  res.send(html);
 };
