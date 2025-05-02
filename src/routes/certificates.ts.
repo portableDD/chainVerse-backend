@@ -1,0 +1,12 @@
+import express from "express";
+import { generateCertificate, getCertificateById } from "../controllers/certificateController";
+
+const router = express.Router();
+
+// POST /certificates/generate
+router.post("/generate", generateCertificate);
+
+// GET /certificates/:id
+router.get("/:id", getCertificateById);
+
+export default router;
