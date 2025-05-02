@@ -1,72 +1,54 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { Certificate } from "../models/Certificate";
+import { sendCertificateEmail } from "../emailUtils";  // Import the email function
 
-// Temporary in-memory certificate store
-const certificates: any[] = [];
+export const generateCertificate = async (req: Request, res: Response) => {
+  try {
+    const {
+      studentId,
+      studentFullName,
+      studentEmail,
+      courseTitle,
+      courseInstructorName,
+    } = req.body;
 
-export const generateCertificate = (req: Request, res: Response) => {
-  const {
-    studentId,
-    studentFullName,
-    studentEmail,
-    courseId,
-    courseTitle,
-    courseInstructorName,
-  } = req.body;
+    // Generate certificate details
+    const certificateId = uuidv4();
+    const completionDate = new Date().toISOString();
+    const verificationLink = `https://chainverse.academy/certificates/${certificateId}`;
 
-  // Basic validation
-  if (!studentId || !courseId || !studentFullName || !studentEmail || !courseTitle) {
-    return res.status(400).json({ message: "Missing required fields." });
+    // Create certificate object
+    const newCertificate = new Certificate({
+      certificateId,
+      studentId,
+      studentFullName,
+      studentEmail,
+      courseTitle,
+      courseInstructorName,
+      completionDate,
+      issuedBy: "ChainVerse Academy",
+      verificationLink,
+    });
+
+    // Save certificate (simulate DB or implement logic)
+    await newCertificate.save();
+
+    // Send email
+    await sendCertificateEmail(
+      studentEmail,
+      studentFullName,
+      courseTitle,
+      verificationLink
+    );
+
+    // Respond to client
+    res.status(200).json({
+      message: "Certificate generated and email sent!",
+      certificate: newCertificate,
+    });
+  } catch (error) {
+    console.error("Error generating certificate:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-
-  const certificateId = uuidv4();
-  const completionDate = new Date().toISOString();
-  const verificationLink = `https://chainverse.academy/certificates/${certificateId}`;
-
-  const certificate = {
-    certificateId,
-    studentId,
-    studentFullName,
-    studentEmail,
-    courseId,
-    courseTitle,
-    courseInstructorName: courseInstructorName || "N/A",
-    completionDate,
-    issuedBy: "ChainVerse Academy",
-    verificationLink,
-    web3Badge: true,
-  };
-
-  certificates.push(certificate);
-
-  // NOTE: Later we will add email notification here.
-
-  return res.status(201).json({
-    message: "Certificate generated successfully.",
-    certificate,
-  });
-};
-
-export const getMyCertificates = (req: Request, res: Response) => {
-  const { studentId } = req.query;
-
-  if (!studentId) {
-    return res.status(400).json({ message: "studentId is required as query parameter." });
-  }
-
-  const userCertificates = certificates.filter((cert) => cert.studentId === studentId);
-
-  return res.status(200).json({ certificates: userCertificates });
-};
-
-export const getCertificateById = (req: Request, res: Response) => {
-  const { certificateId } = req.params;
-
-  const certificate = certificates.find((cert) => cert.certificateId === certificateId);
-
-  if (!certificate) {
-    return res.status(404).json({ message: "Certificate not found." });
-  }
-
-  return res.status(200).json({ certificate });
 };
