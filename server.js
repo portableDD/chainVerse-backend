@@ -4,11 +4,13 @@ const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
-
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
 
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
+
+const privacyPolicyRoutes = require('./src/routes/privacyPolicyRoutes');
+
 const auth2FA = require('./src/routes/2factorRoute');
 const logins = require('./src/routes/loginLogRoute');
 const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
@@ -21,6 +23,7 @@ const contactUsRoutes = require('./src/routes/contactMessageRoute');
 const adminFinancialAidRoutes = require('./src/routes/adminFinancialAidRoutes'); // <-- Add this line
 const nftRoutes = require('./src/routes/nftRoute');
 const careerRoutes = require('./src/routes/careerRoutes');
+
 
 const { initScheduler } = require('./src/services/reportScheduler');
 
@@ -58,6 +61,10 @@ app.use('/admin', require('./src/routes/admin'));
 app.use('/platform-info', require('./src/routes/platformInfo'));
 app.use('/api/study-groups', studyGroupRoutes);
 app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
+
+app.use('/settings', privacyPolicyRoutes);
+
+
 app.use('/section', aboutSectionRoutes);
 app.use('/api', removalRequestRoutes);
 app.use('/reports', courseReportRoutes);
