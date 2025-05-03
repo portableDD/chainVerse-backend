@@ -1,84 +1,63 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const TutorSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true,
-  },
-  lastName: {
+  fullName: {
     type: String,
     required: true,
   },
   email: {
     type: String,
     required: true,
+    unique: true,
     lowercase: true
   },
-  phoneNumber: {
+  password: {
+    type: String,
+    required: true,
+    select: false
+  },
+  web3Expertise: {
     type: String,
     required: true,
   },
-  languageSpoken: {
-    type: String,
-    required: true,
-  },
-  primaryExpertise: {
-    type: String,
-    required: true,
-  },
-  yearsOfExperience: {
+  experience: {
     type: Number,
-    required: true
-  },
-  currentRole: {
-    type: String,
     required: true
   },
   bio: {
     type: String,
-    required: true,
     maxlength: [1000, 'Bio cannot be more than 1000 characters']
   },
-  linkedinProfile: {
-    type: String
+  verified: {
+    type: Boolean,
+    default: false
   },
-  githubProfile: {
-    type: String
-  },
-  portfolioWebsite: {
-    type: String
-  },
-  proposedCourseTitle: {
+  verificationCode: {
     type: String,
-    required: true
+    select: false
   },
-  courseDescription: {
+  verificationCodeValidation: {
+    type: Date
+  },
+  refreshToken: {
     type: String,
-    required: true,
-    maxlength: [2000, 'Course description cannot be more than 2000 characters']
+    select: false
   },
-  courseLevel: {
+  resetPasswordToken: {
     type: String,
-    required: true,
-    enum: ['Beginner', 'Intermediate', 'Advanced']
+    select: false
   },
-  estimatedDuration: {
+  resetPasswordExpires: {
+    type: Date,
+    select: false
+  },
+  role: {
     type: String,
-    required: [true, 'Estimated duration is required']
+    default: 'tutor',
+    enum: ['tutor']
   },
-  courseOutline: {
-    type: [String],
-    required: true
-  },
-  courseUniqueness: {
-    type: String,
-    required: true,
-    maxlength: [1000, 'Course uniqueness cannot be more than 1000 characters']
-  },
-  sampleLessonMedia: {
-    type: String,
-    default: ''
-  },
+
   status: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
@@ -87,10 +66,29 @@ const TutorSchema = new mongoose.Schema({
   adminComment: {
     type: String
   },
-  submittedAt: {
+  createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Pre-save hook to hash password
+TutorSchema.pre('save', async function(next) {
+  // Only hash the password if it's modified or new
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare passwords
+TutorSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model("Tutor", TutorSchema);
