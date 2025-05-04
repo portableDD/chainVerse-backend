@@ -1,4 +1,11 @@
-# chainVerse Academy API Documentation
+# API Documentation
+
+## Table of Contents
+- [Authentication](#authentication)
+- [Courses](#courses)
+- [Students](#students)
+- [Tutor Authentication](./src/docs/tutorAuth.md)
+- [Tutor Performance Reports](#tutor-performance-reports)
 
 ## Tutor Performance Reports
 
