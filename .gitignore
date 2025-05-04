@@ -1,6 +1,25 @@
+# Node modules
+node_modules/
+
+# Environment variables
 .env
 
+# Dependency lock file (if not used)
 package-lock.json
 
+# Logs
+logs
+*.log
+npm-debug.log*
 
-node_modules/
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Build output (if compiling TypeScript)
+dist/
+build/
+
+# IDE/editor settings
+.vscode/
+.idea/

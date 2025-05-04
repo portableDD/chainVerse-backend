@@ -1,75 +1,44 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const studentSchema = mongoose.Schema(
-  {
-    firstName: {
-      type: String,
-      trim: true,
-      required: true,
-    },
-    lastName: {
-      type: String,
-      trim: true,
-      required: true,
-    },
-    email: {
-      type: String,
-      trim: true,
-      required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      trim: true,
-      required: true,
-      select: false,
-    },
-    forgotPasswordCode: {
-      type: String,
-      select: false,
-    },
-    forgotPasswordCodeValidation: {
-      type: Number,
-      select: false,
-    },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
-    verificationCode: {
-      type: String,
-      select: false,
-    },
-    verificationCodeValidation: {
-      type: Number,
-      select: false,
-    },
-    refreshToken: {
-      type: String,
-      select: false,
-    },
-    googleId: { // New field for Google OAuth
-      type: String,
-      unique: true,
-      sparse: true, // Allows null values for non-Google users
-    },
+const StudentSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
   },
-  { timestamps: true }
-);
-
-// revokedToken schema in order to implement refresh token rotation
-const revokedTokenSchema = new mongoose.Schema({
-  token: { type: String, required: true }, // Hashed refresh token
-  studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
-  expiresAt: { type: Date, required: true }, // For cleanup
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  enrolledCourses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
+  }],
+  completedCourses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
+  }],
+  financialAid: {
+    status: {
+      type: String,
+      enum: ['none', 'applied', 'approved', 'rejected'],
+      default: 'none'
+    },
+    details: {
+      type: String
+    },
+    approvalDate: {
+      type: Date
+    }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-// indexing
-revokedTokenSchema.index({ token: 1, studentId: 1 });
-revokedTokenSchema.index(
-  { expiresAt: 1 },
-  { expireAfterSeconds: 0 } // for automatic refreshToken deletion after it expires
-);
-
-exports.RevokedToken = mongoose.model("RevokedToken", revokedTokenSchema);
-exports.Student = mongoose.model("Student", studentSchema);
+module.exports = mongoose.model('Student', StudentSchema);

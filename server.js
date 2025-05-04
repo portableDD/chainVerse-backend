@@ -1,77 +1,29 @@
-const express = require('express');
-const dotEnv = require('dotenv');
-const morgan = require('morgan');
-const cors = require('cors');
-const helmet = require('helmet');
-const path = require('path');
-const { handleMulterErrors } = require('./src/middlewares/errorHandler');
-const organizationRoutes = require('./src/routes/organization');
-const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
-const removalRequestRoutes = require('./src/routes/accountRemovalRoute');
+// server.ts
+import http from 'http';
+import app from './app';
+import { Server } from 'socket.io';
 
-// const dotEnv = require("dotenv");
-// const morgan = require("morgan");
-// const cors = require("cors");
-// const helmet = require("helmet");
+const server = http.createServer(app);
 
-const app = express();
-const dbConnection = require('./src/config/database/connection');
-const router = require('./src/routes/index');
-const studyGroupRoutes = require('./src/routes/studyGroupRoutes');
-
-dotEnv.config();
-
-app.use(cors());
-dbConnection();
-
-// dotEnv.config();
-
-app.use(cors());
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
-app.use(morgan('dev'));
-
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Error handling middleware
-app.use(handleMulterErrors);
-
-// Routes
-app.use('/organization', organizationRoutes);
-
-app.use('/admin', require('./src/routes/admin'));
-app.use('/platform-info', require('./src/routes/platformInfo'));
-app.use('/api/study-groups', studyGroupRoutes);
-app.use('/admin/subscription', require('./src/routes/subscriptionPlanRoutes'));
-app.use('/section', aboutSectionRoutes);
-app.use('/api', removalRequestRoutes);
-
-
-app.get('/', (req, res) => {
-	res.send('Welcome to ChainVerse Academy');
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'DELETE']
+  }
 });
 
-app.use('/api', router);
+io.on('connection', (socket) => {
+  console.log(`🔌 User connected: ${socket.id}`);
 
-app.use((req, res, next) => {
-	const error = new Error('Not found');
-	error.status = 404;
-	next(error);
+  socket.on('disconnect', () => {
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
 });
 
-app.use((error, req, res, next) => {
-	res.status(error.status || 500).send({
-		status: error.status || 500,
-		message: error.message,
-		body: {},
-	});
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-	console.log(`Server listening on port ${PORT}`);
-});
+export { io };
+export default server;
