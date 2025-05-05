@@ -1,40 +1,44 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../../../server');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const app = require('../../app');
 const OrganizationMember = require('../../models/OrganizationMember');
 const User = require('../../models/User');
+const { generateToken } = require('../../utils/hashing');
 
 describe('Organization Member Routes', () => {
   let adminToken;
   let regularToken;
   let testMemberId;
 
+  let mongoServer;
+
   beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+
     // Create admin user
-    const adminUser = await User.create({
+    const adminUser = {
+      _id: new mongoose.Types.ObjectId(),
       email: 'admin@test.com',
-      password: 'password123',
-      isAdmin: true,
-      isEmailVerified: true
-    });
+      role: 'Admin'
+    };
 
     // Create regular user
-    const regularUser = await User.create({
+    const regularUser = {
+      _id: new mongoose.Types.ObjectId(),
       email: 'regular@test.com',
-      password: 'password123',
-      isAdmin: false,
-      isEmailVerified: true
-    });
+      role: 'Employee'
+    };
 
     // Generate tokens
-    adminToken = adminUser.generateAuthToken();
-    regularToken = regularUser.generateAuthToken();
+    adminToken = generateToken(adminUser);
+    regularToken = generateToken(regularUser);
   });
 
   afterAll(async () => {
-    await User.deleteMany({});
-    await OrganizationMember.deleteMany({});
-    await mongoose.connection.close();
+    await mongoose.disconnect();
+    await mongoServer.stop();
   });
 
   describe('POST /organization/member/add', () => {

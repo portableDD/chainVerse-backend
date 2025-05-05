@@ -1,6 +1,8 @@
 const OrganizationMember = require('../models/OrganizationMember');
 const User = require('../models/User');
+const Organization = require('../models/Organization');
 const crypto = require('crypto');
+const { sendMemberInvitation, sendMemberRemovalNotification } = require('../utils/organizationEmailService');
 
 // Add new organization member
 exports.addMember = async (req, res) => {
@@ -32,7 +34,11 @@ exports.addMember = async (req, res) => {
 
     await newMember.save();
 
-    // TODO: Send invitation email with token
+    // Get organization name for the email
+    const organization = await Organization.findById(req.user.organizationId);
+    
+    // Send invitation email
+    await sendMemberInvitation(email, fullName, organization.name, invitationToken);
 
     res.status(201).json({
       message: 'Member invitation sent successfully',
@@ -123,7 +129,11 @@ exports.removeMember = async (req, res) => {
       return res.status(404).json({ message: 'Member not found' });
     }
 
-    // TODO: Send removal notification email
+    // Get organization name for the email
+    const organization = await Organization.findById(req.user.organizationId);
+    
+    // Send removal notification
+    await sendMemberRemovalNotification(member.email, member.fullName, organization.name);
 
     res.status(200).json({
       message: 'Member removed successfully',
