@@ -7,16 +7,16 @@ const {
   updateMessageStatus, 
   deleteMessage 
 } = require('../controllers/contactMessageController');
-const adminAuthorization = require('../middlewares/adminAuthorization');
+const isAdmin = require('../middlewares/admin');
 const auth = require('../middlewares/auth');
 
 // Public route to submit a contact message
 router.post('/contact-us', submitMessage);
 
 // Admin-only routes
-router.get('/contact-us', [auth, adminAuthorization], getAllMessages);
-router.get('/contact-us/:id', [auth, adminAuthorization], getMessageById);
-router.patch('/contact-us/:id', [auth, adminAuthorization], updateMessageStatus);
-router.delete('/contact-us/:id', [auth, adminAuthorization], deleteMessage);
+router.get('/contact-us', [auth.authenticate, isAdmin.ensureAdmin], getAllMessages);
+router.get('/contact-us/:id', [auth.authenticate, isAdmin.ensureAdmin], getMessageById);
+router.patch('/contact-us/:id', [auth.authenticate, isAdmin.ensureAdmin], updateMessageStatus);
+router.delete('/contact-us/:id', [auth.authenticate, isAdmin.ensureAdmin], deleteMessage);
 
 module.exports = router;

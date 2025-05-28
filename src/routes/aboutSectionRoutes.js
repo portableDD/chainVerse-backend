@@ -14,19 +14,19 @@ router.get('/:id', aboutSectionController.getSectionById);
 // Admin-only endpoints for CRUD operations
 router.post(
 	'/',
-	isAuthenticated,
-	isAdmin,
+	isAuthenticated.authenticate,
+	isAdmin.ensureAdmin,
 	validateSection,
 	aboutSectionController.createSection
 );
 router
 	.route('/:id')
 	.patch(
-		isAuthenticated,
-		isAdmin,
+		isAuthenticated.authenticate,
+		isAdmin.ensureAdmin,
 		validateSection,
 		aboutSectionController.updateSection
 	)
-	.delete(isAuthenticated, isAdmin, aboutSectionController.deleteSection);
+	.delete(isAuthenticated.authenticate, isAdmin.ensureAdmin, aboutSectionController.deleteSection);
 
 module.exports = router;

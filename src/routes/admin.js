@@ -4,13 +4,13 @@ const auth = require('../middlewares/auth');
 const adminMiddleware = require('../middlewares/admin');
 const { validatePlatformInfo } = require('../validators/platformInfoValidator');
 const platformInfoController = require('../controllers/platformInfoController');
-
+const isAdmin = require('../middlewares/admin');
 // @route   POST /admin/platform-info
 // @desc    Create platform information
 // @access  Admin
 router.post(
   '/platform-info',
-  [auth, adminMiddleware, validatePlatformInfo],
+  [auth.authenticate, isAdmin.ensureAdmin, validatePlatformInfo],
   platformInfoController.createPlatformInfo
 );
 
@@ -19,7 +19,7 @@ router.post(
 // @access  Admin
 router.put(
   '/platform-info/:id',
-  [auth, adminMiddleware, validatePlatformInfo],
+  [auth.authenticate, isAdmin.ensureAdmin, validatePlatformInfo],
   platformInfoController.updatePlatformInfo
 );
 
@@ -28,7 +28,7 @@ router.put(
 // @access  Admin
 router.delete(
   '/platform-info/:id',
-  [auth, adminMiddleware],
+  [auth.authenticate, isAdmin.ensureAdmin],
   platformInfoController.deletePlatformInfo
 );
 

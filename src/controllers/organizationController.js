@@ -2,7 +2,7 @@ const { default: mongoose } = require("mongoose");
 const Organization = require("../models/organization");
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 
-exports.subscribeToPlan = async (req, res) => {
+const subscribeToPlan = async (req, res) => {
   try {
     const {
       name,
@@ -36,7 +36,7 @@ exports.subscribeToPlan = async (req, res) => {
   }
 };
 
-exports.getSubscriptionPlan = async (req, res) => {
+const getSubscriptionPlan = async (req, res) => {
   try {
     const id = req.params.id;
     if (!id) {
@@ -78,7 +78,7 @@ exports.getSubscriptionPlan = async (req, res) => {
   }
 };
 
-exports.updateSubscriptionPlan = async (req, res) => {
+const updateSubscriptionPlan = async (req, res) => {
   try {
     const id = req.params.id;
     const planId = req.params.planId;
@@ -111,16 +111,25 @@ exports.updateSubscriptionPlan = async (req, res) => {
   }
 };
 
-exports.cancelSubscriptionPlan = async (req, res) => {
+const cancelSubscriptionPlan = async (req, res) => {
   try {
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
 };
 
-exports.getSubscriptionPlanInvoice = async (req, res) => {
+const getSubscriptionPlanInvoice = async (req, res) => {
   try {
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
+};
+
+
+module.exports = {
+  subscribeToPlan,
+  getSubscriptionPlan,
+  updateSubscriptionPlan,
+  cancelSubscriptionPlan,
+  getSubscriptionPlanInvoice,
 };

@@ -6,7 +6,6 @@ const helmet = require('helmet');
 const path = require('path');
 
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
-const forumRoutes = require('./src/routes/forumRoutes');
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const privacyPolicyRoutes = require('./src/routes/privacyPolicyRoutes');
@@ -23,8 +22,8 @@ const nftRoutes = require('./src/routes/nftRoute');
 const careerRoutes = require('./src/routes/careerRoutes');
 const { initScheduler } = require('./src/services/reportScheduler');
 const studyGroupRoutes = require("./src/routes/studyGroupRoutes");
-const sessionRoutes = require('./routes/session.routes');
-const setupSwaggerDocs = require('./swagger');
+const sessionRoutes = require('./src/routes/sessionRoute');
+// const setupSwaggerDocs = require('./swagger');
 
 const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
@@ -67,14 +66,13 @@ app.use('/api', contactUsRoutes);
 app.use('/admin/financial-aid', adminFinancialAidRoutes);
 app.use('/api', nftRoutes);
 app.use('/api', careerRoutes);
-app.use('/courses/:id/forum', forumRoutes);
 
 app.get('/', (req, res) => {
 	res.send('Welcome to ChainVerse Academy');
 });
 
 // Swagger
-setupSwaggerDocs(app);
+// setupSwaggerDocs(app);
 
 // 404 handler
 app.use((req, res, next) => {

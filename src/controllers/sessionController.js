@@ -1,5 +1,4 @@
-const sessionService = require('../services/session.service');
-const Session = require('../models/Session');
+const Session = require('../models/sessionModel');
 const User = require('../models/User');
 
 // POST /sessions/book

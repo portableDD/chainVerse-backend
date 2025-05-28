@@ -3,8 +3,8 @@ const path = require('path');
 const logger = require('./logger');
 
 // Register fonts
-registerFont(path.join(__dirname, '../assets/fonts/Poppins-Bold.ttf'), { family: 'Poppins-Bold' });
-registerFont(path.join(__dirname, '../assets/fonts/Poppins-Regular.ttf'), { family: 'Poppins-Regular' });
+// registerFont(path.join(__dirname, '../assets/fonts/Poppins-Bold.ttf'), { family: 'Poppins-Bold' });
+// registerFont(path.join(__dirname, '../assets/fonts/Poppins-Regular.ttf'), { family: 'Poppins-Regular' });
 
 /**
  * Generate a certificate image
@@ -18,7 +18,7 @@ exports.generateCertificateImage = async (certificate) => {
     const ctx = canvas.getContext('2d');
     
     // Load template image
-    const templateImage = await loadImage(path.join(__dirname, '../assets/images/certificate-template.png'));
+   // const templateImage = await loadImage(path.join(__dirname, '../assets/images/certificate-template.png'));
     ctx.drawImage(templateImage, 0, 0, 1200, 800);
     
     // Set styles for student name

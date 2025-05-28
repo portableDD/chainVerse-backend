@@ -4,8 +4,8 @@ const {enable2FA, verify2FA, disable2FA} = require("./../controllers/Auth2FACont
 
 const router = express.Router();
 
-router.post('/2fa/enable', auth, enable2FA);
-router.post('/2fa/verify', auth, verify2FA);
-router.post('/2fa/disable', auth, disable2FA);
+router.post('/2fa/enable', auth.authenticate, enable2FA);
+router.post('/2fa/verify', auth.authenticate, verify2FA);
+router.post('/2fa/disable', auth.authenticate, disable2FA);
 
 module.exports = router;

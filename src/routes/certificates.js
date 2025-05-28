@@ -1,26 +1,11 @@
-import { Router, Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
+const { Router } = require("express");
+const { v4: uuidv4 } = require("uuid");
 
 const router = Router();
 
-interface Certificate {
-  certificateId: string;
-  studentId: string;
-  courseId: string;
-  studentFullName: string;
-  courseTitle: string;
-  courseInstructorName?: string;
-  completionDate: string;
-  issuedBy: string;
-  verificationLink: string;
-  web3Badge: boolean;
-  certificateHash?: string;
-}
+const certificates = [];
 
-const certificates: Certificate[] = [];
-
-// POST /certificates/generate
-router.post("/generate", (req: Request, res: Response) => {
+router.post("/generate", (req, res) => {
   const {
     studentId,
     courseId,
@@ -37,7 +22,7 @@ router.post("/generate", (req: Request, res: Response) => {
   const completionDate = new Date().toISOString().split("T")[0];
   const verificationLink = `https://chainverse.academy/certificates/${certificateId}`;
 
-  const certificate: Certificate = {
+  const certificate = {
     certificateId,
     studentId,
     courseId,
@@ -58,8 +43,7 @@ router.post("/generate", (req: Request, res: Response) => {
   });
 });
 
-// GET /certificates/my-certificates?studentId=123
-router.get("/my-certificates", (req: Request, res: Response) => {
+router.get("/my-certificates", (req, res) => {
   const { studentId } = req.query;
 
   if (!studentId || typeof studentId !== "string") {
@@ -73,8 +57,7 @@ router.get("/my-certificates", (req: Request, res: Response) => {
   return res.json({ certificates: studentCertificates });
 });
 
-// GET /certificates/:certificateId
-router.get("/:certificateId", (req: Request, res: Response) => {
+router.get("/:certificateId", (req, res) => {
   const { certificateId } = req.params;
 
   const certificate = certificates.find(
@@ -88,4 +71,4 @@ router.get("/:certificateId", (req: Request, res: Response) => {
   return res.json({ certificate });
 });
 
-export default router;
+module.exports = router;

@@ -1,24 +1,24 @@
-import nodemailer from "nodemailer";
+const nodemailer = require('nodemailer');
 
 // Create a reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,  // Your email from .env
-    pass: process.env.EMAIL_PASS,  // Your app password from .env
+    user: process.env.EMAIL_USER, // Your email from .env
+    pass: process.env.EMAIL_PASS, // Your app password from .env
   },
 });
 
 // Function to send email
-export const sendCertificateEmail = async (
-  to_email: string,
-  student_name: string,
-  course_title: string,
-  verification_link: string
+const sendCertificateEmail = async (
+  to_email,
+  student_name,
+  course_title,
+  verification_link
 ) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,  // Sender's email
-    to: to_email,                  // Recipient's email
+    from: process.env.EMAIL_USER, // Sender's email
+    to: to_email,                 // Recipient's email
     subject: `Your Certificate for ${course_title}`,
     html: `
       <h3>Congratulations, ${student_name}!</h3>
@@ -30,9 +30,13 @@ export const sendCertificateEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("Certificate email sent!");
+    console.log('Certificate email sent!');
   } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Failed to send certificate email.");
+    console.error('Error sending email:', error);
+    throw new Error('Failed to send certificate email.');
   }
+};
+
+module.exports = {
+  sendCertificateEmail,
 };

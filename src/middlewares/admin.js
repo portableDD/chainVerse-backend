@@ -1,10 +1,14 @@
 const User = require('../models/User');
 
-module.exports = async (req, res, next) => {
+exports.ensureAdmin = async (req, res, next) => {
   try {
-    // User is added by auth middleware
+    // Assumes req.user is already set by earlier auth middleware (e.g., passport)
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ msg: 'Unauthorized: No user info found' });
+    }
+
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
     }
@@ -13,6 +17,7 @@ module.exports = async (req, res, next) => {
       return res.status(403).json({ msg: 'Access denied: Admin privileges required' });
     }
 
+    // User is admin, proceed
     next();
   } catch (err) {
     console.error(err.message);

@@ -27,47 +27,47 @@
 
 const express = require('express');
 const router = express.Router();
-const sessionController = require('../controllers/session.controller');
+const sessionController = require('../controllers/sessionController');
 const {
-  authMiddleware,
-  roleMiddleware,
-} = require('../middlewares/auth.middleware');
+  hasRole
+} = require('../middlewares/auth');
+const auth = require('../middlewares/auth');
 
 router.post(
   '/book',
-  authMiddleware,
-  roleMiddleware('student'),
+  auth.authenticate,
+  hasRole('student'),
   sessionController.book,
 );
 router.get(
   '/student',
-  authMiddleware,
-  roleMiddleware('student'),
+   auth.authenticate,
+  hasRole('student'),
   sessionController.getForStudent,
 );
 router.get(
   '/tutor',
-  authMiddleware,
-  roleMiddleware('tutor'),
+   auth.authenticate,
+  hasRole('tutor'),
   sessionController.getForTutor,
 );
 router.put(
   '/:id/accept',
-  authMiddleware,
-  roleMiddleware('tutor'),
+   auth.authenticate,
+  hasRole('tutor'),
   sessionController.accept,
 );
 router.put(
   '/:id/decline',
-  authMiddleware,
-  roleMiddleware('tutor'),
+   auth.authenticate,
+  hasRole('tutor'),
   sessionController.decline,
 );
-router.put('/:id/reschedule', authMiddleware, sessionController.reschedule);
+router.put('/:id/reschedule',  auth.authenticate, sessionController.reschedule);
 router.delete(
   '/:id/cancel',
-  authMiddleware,
-  roleMiddleware('student'),
+   auth.authenticate,
+  hasRole('student'),
   sessionController.cancel,
 );
 

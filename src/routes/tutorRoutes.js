@@ -4,6 +4,7 @@ const tutorController = require('../controllers/tutorController');
 const tutorAuth = require('../middlewares/tutorAuth');
 const tutorValidator = require('../validators/tutorValidator');
 const rateLimit = require('express-rate-limit');
+const tutorReportController = require('../controllers/tutorReportController');
 
 // Rate limiting for tutor applications
 const applyLimiter = rateLimit({
@@ -21,13 +22,13 @@ const authLimiter = rateLimit({
 
 // Tutor application routes
 router.post('/tutor/apply', applyLimiter, tutorController.submitTutorApplication);
-router.get('/admin/tutor-applications', tutorAuth.verifyToken, tutorAuth.adminRoleCheck, tutorController.getAllTutors);
-router.get('/admin/tutor-applications/:id', tutorAuth.verifyToken, tutorAuth.adminRoleCheck, tutorController.getTutorById);
-router.put('/admin/tutor-applications/:id/decision', tutorAuth.verifyToken, tutorAuth.adminRoleCheck, tutorController.approveRejectApplication);
+router.get('/admin/tutor-applications', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getAllTutors);
+router.get('/admin/tutor-applications/:id', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getTutorById);
+router.put('/admin/tutor-applications/:id/decision', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.approveRejectApplication);
 
 // Tutor authentication routes
 router.post('/tutor/create', 
-  tutorValidator.validateTutorSignup, 
+  tutorValidator.validateTutorCreation, 
   tutorValidator.validateResults, 
   tutorController.createTutor
 );
@@ -47,7 +48,7 @@ router.post('/tutor/login',
 
 router.post('/tutor/forget/password', 
   authLimiter,
-  tutorValidator.validateForgetPassword, 
+  tutorValidator.validateForgotPassword, 
   tutorValidator.validateResults, 
   tutorController.forgotPassword
 );
@@ -62,17 +63,17 @@ router.post('/tutor/reset/password',
 router.post('/tutor/refresh-token', tutorController.refreshToken);
 
 // Protected tutor routes
-router.get('/tutor/profile', tutorAuth.verifyToken, tutorAuth.tutorRoleCheck, tutorController.getProfile);
-router.put('/tutor/profile', 
-  tutorAuth.verifyToken, 
-  tutorAuth.tutorRoleCheck,
-  tutorValidator.validateProfileUpdate, 
-  tutorValidator.validateResults, 
-  tutorController.updateProfile
-);
+// router.get('/tutor/profile', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getProfile);
+// router.put('/tutor/profile', 
+//   tutorAuth.authenticateTutor, 
+//   tutorAuth.tutorRoleCheck,
+//   tutorValidator.validateProfileUpdate, 
+//   tutorValidator.validateResults, 
+//   tutorController.updateProfile
+// );
 
-router.get('/tutor/courses/reports', tutorAuth.verifyToken, tutorAuth.tutorRoleCheck, tutorController.getCourseReports);
-router.get('/tutor/courses/:courseId/reports', tutorAuth.verifyToken, tutorAuth.tutorRoleCheck, tutorController.getSpecificCourseReport);
-router.get('/tutor/leaderboard', tutorAuth.verifyToken, tutorAuth.tutorRoleCheck, tutorController.getLeaderboard);
+router.get('/tutor/courses/reports', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getTutorCoursesReport);
+router.get('/tutor/courses/:courseId/reports', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getCourseReport);
+router.get('/tutor/leaderboard', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getTutorRankings);
 
 module.exports = router;

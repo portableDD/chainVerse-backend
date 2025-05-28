@@ -1,7 +1,7 @@
 const Certificate = require('../models/Certificate');
 const Course = require('../models/course');
 const Student = require('../models/student');
-const ShareAnalytics = require('../models/ShareAnalytics');
+//const ShareAnalytics = require('../models/ShareAnalytics');
 const QRCode = require('qrcode');
 const { generatePDF } = require('../utils/pdfGenerator');
 const { uploadToS3 } = require('../utils/s3Uploader');

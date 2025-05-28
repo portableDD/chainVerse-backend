@@ -4,6 +4,7 @@ const faqController = require('../controllers/faqController');
 const faqValidator = require('../validators/faqValidator');
 const { authMiddleware } = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/admin');
+const isAdmin = require('../middlewares/admin');
 
 // Public routes
 router.get('/', faqController.getAllFAQs);
@@ -13,7 +14,7 @@ router.get('/:id', faqController.getFAQById);
 router.post(
     '/',
     authMiddleware,
-    adminMiddleware,
+    isAdmin.ensureAdmin, // Ensure only admin can create FAQs
     faqValidator.createFAQValidator,
     faqController.createFAQ
 );
@@ -21,7 +22,7 @@ router.post(
 router.patch(
     '/:id',
     authMiddleware,
-    adminMiddleware,
+    isAdmin.ensureAdmin, // Ensure only admin can update FAQs
     faqValidator.updateFAQValidator,
     faqController.updateFAQ
 );
@@ -29,7 +30,7 @@ router.patch(
 router.delete(
     '/:id',
     authMiddleware,
-    adminMiddleware,
+    isAdmin.ensureAdmin, // Ensure only admin can delete FAQs
     faqController.deleteFAQ
 );
 

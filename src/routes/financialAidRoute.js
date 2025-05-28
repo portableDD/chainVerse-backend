@@ -17,7 +17,7 @@ const applicationRateLimiter = rateLimit({
 
 router.post(
 	'/apply',
-	auth,
+	auth.authenticate,
 	[
 		body('courseId').notEmpty().withMessage('CourseId is required'),
 		body('reason').notEmpty().withMessage('Reason is required'),
@@ -26,6 +26,6 @@ router.post(
 	applicationRateLimiter,
 	applyForFinancialAid
 );
-router.get('/my-applications', auth, getMyApplications);
+router.get('/my-applications', auth.authenticate, getMyApplications);
 
 module.exports = router;

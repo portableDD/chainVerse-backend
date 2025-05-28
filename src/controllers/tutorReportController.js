@@ -1,8 +1,8 @@
-const { TutorReport } = require('../models/tutorReport');
+const { TutorReport } = require('../models/tutors');
 const { Tutor } = require('../models/tutors');
 const { authMiddleware } = require('../middlewares/authMiddleware');
 const { roleMiddleware } = require('../middlewares/roleMiddleware');
-const { Course } = require('../models/courses'); // Added Course model
+const { Course } = require('../models/course'); // Added Course model
 const mongoose = require('mongoose');
 const redis = require('redis');
 const json2csv = require('json2csv').Parser;

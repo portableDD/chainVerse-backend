@@ -1,13 +1,12 @@
-import dotenv from "dotenv";
-dotenv.config();
+require('dotenv').config();
 
-import express from "express";
+const express = require('express');
 
 const app = express();
 app.use(express.json());
 
-app.get("/", (_req, res) => {
-  res.send("ChainVerse Certificate Generator API is running");
+app.get('/', (_req, res) => {
+  res.send('ChainVerse Certificate Generator API is running');
 });
 
 const PORT = process.env.PORT || 3000;

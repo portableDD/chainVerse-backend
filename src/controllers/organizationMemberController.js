@@ -1,6 +1,6 @@
 const OrganizationMember = require('../models/OrganizationMember');
 const User = require('../models/User');
-const Organization = require('../models/Organization');
+const Organization = require('../models/organization');
 const crypto = require('crypto');
 const { sendMemberInvitation, sendMemberRemovalNotification } = require('../utils/organizationEmailService');
 
