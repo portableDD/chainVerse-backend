@@ -47,6 +47,11 @@ describe("Guest Cart API", () => {
     });
   });
 
+  afterEach(async () => {
+    await Course.deleteMany({});
+    await GuestCart.deleteMany({});
+  });
+
   it("should create a new guest cart", async () => {
     const res = await request(app)
       .post("/api/guest/cart/create")
