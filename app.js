@@ -6,6 +6,9 @@ const helmet = require('helmet');
 const path = require('path');
 
 const { handleMulterErrors } = require('./src/middlewares/errorHandler');
+const { apiRateLimitMiddleware } = require('./src/middlewares/rateLimitMiddleware');
+const rateLimitRoutes = require('./src/routes/rateLimitRoutes');
+
 const organizationRoutes = require('./src/routes/organization');
 const aboutSectionRoutes = require('./src/routes/aboutSectionRoutes');
 const privacyPolicyRoutes = require('./src/routes/privacyPolicyRoutes');
@@ -46,6 +49,12 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Error middleware
 app.use(handleMulterErrors);
 
+// Rate limiting middleware (apply globally before routes)
+app.use(apiRateLimitMiddleware);
+
+// Rate limit management routes
+app.use('/api/rate-limit', rateLimitRoutes);
+
 // Routes
 app.use('/sessions', sessionRoutes);
 app.use('/api', router);
@@ -70,7 +79,7 @@ app.use('/api', careerRoutes);
 app.use('/api', guestCartRoutes);
 
 app.get('/', (req, res) => {
-	res.send('Welcome to ChainVerse Academy');
+    res.send('Welcome to ChainVerse Academy');
 });
 
 // Swagger
@@ -78,18 +87,18 @@ app.get('/', (req, res) => {
 
 // 404 handler
 app.use((req, res, next) => {
-	const error = new Error("Not found");
-	error.status = 404;
-	next(error);
+    const error = new Error("Not found");
+    error.status = 404;
+    next(error);
 });
 
 // Global error handler
 app.use((error, req, res, next) => {
-	res.status(error.status || 500).send({
-		status: error.status || 500,
-		message: error.message,
-		body: {},
-	});
+    res.status(error.status || 500).send({
+        status: error.status || 500,
+        message: error.message,
+        body: {},
+    });
 });
 
 // Initialize report scheduler

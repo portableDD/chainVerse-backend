@@ -1,3 +1,4 @@
+
 const express = require("express");
 const tutorRoutes = require("./tutorRoutes");
 const subscriptionPlanRoutes = require("./subscriptionPlanRoutes");
@@ -6,6 +7,9 @@ const certificateRoutes = require("./certificateRoutes");
 const reportAbuseRoutes = require("./reportAbuseRoute");
 const pointsRoutes = require("./pointsRoutes");
 const notificationRoutes = require("./notifications");
+const authRoutes = require('./authRoute');
+const courseRoutes = require('./courseRoute');
+const rateLimitRoutes = require('./rateLimitRoutes');
 
 const router = express.Router();
 
@@ -16,5 +20,8 @@ router.use("/certificates", certificateRoutes);
 router.use("/reports/abuse", reportAbuseRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/", pointsRoutes);
+router.use('/auth', authRoutes);
+router.use('/courses', courseRoutes);
+router.use('/rate-limit', rateLimitRoutes);
 
 module.exports = router;
