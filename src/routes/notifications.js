@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/mainNotificationController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticate } = require('../middlewares/auth');
+
 
 // Apply authentication to all routes
-router.use(authenticateToken);
+router.use(authenticate);
 
 /**
  * @swagger

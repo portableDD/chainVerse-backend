@@ -1,4 +1,4 @@
-const Tutor = require("./../models/tutors");
+const Tutor = require("../models/tutors");
 
 // Get all tutors with pagination
 exports.getAllTutors = async (req, res) => {
@@ -29,4 +29,3 @@ exports.getTutorById = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
